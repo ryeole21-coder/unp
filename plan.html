@@ -194,13 +194,14 @@
     <button id="layerSat">위성</button>
   </div>
   <button class="hbtn" id="btnPhoto">사진 열기</button>
+  <button class="hbtn warn" id="btnGeoClear" style="display:none">배경사진 지우기</button>
   <button class="hbtn" id="btnUndo">↩ 실행취소</button>
   <button class="hbtn" id="btnRedo">↪</button>
   <button class="hbtn primary" id="btnPng">PNG 저장</button>
   <button class="hbtn" id="btnJson">계획 저장</button>
   <button class="hbtn" id="btnOpen">계획 열기</button>
   <button class="hbtn warn" id="btnClear">전체 삭제</button>
-  <input type="file" id="fileImg" accept="image/*" hidden>
+  <input type="file" id="fileImg" accept="image/*,.tif,.tiff" hidden>
   <input type="file" id="fileJson" accept=".json,application/json" hidden>
 </header>
 
@@ -286,6 +287,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.21.0/dist/proj4.js"></script>
 <script>
 "use strict";
 /* ────────────────────────────────────────────
@@ -310,6 +313,7 @@ const state = {
   draft: null,                       // 작성 중인 선 {kind, pts:[]}
   photo: null,                       // HTMLImageElement
   photoURL: null,                    // dataURL (저장용)
+  geoPhoto: null,                    // {canvas, wx0,wy0,wx1,wy1} — GeoTIFF 좌표 정합 오버레이(지도 모드)
   squadUnit: 1, squadTeam: 1, officerNo: 0,
   size: 1,                           // 새 도형 기본 크기·두께 배율
   textBg: 0.55,                      // 새 텍스트 기본 배경 투명도(0=투명,1=불투명)
@@ -460,6 +464,11 @@ function drawBackground(g, W, H) {
         Math.floor(w2sX(tx * wPerTile)), Math.floor(w2sY(ty * wPerTile)),
         Math.ceil(TILE * f) + 1, Math.ceil(TILE * f) + 1);
     }
+  }
+  if (state.geoPhoto) {
+    const gp = state.geoPhoto;
+    const sx0 = w2sX(gp.wx0), sy0 = w2sY(gp.wy0), sx1 = w2sX(gp.wx1), sy1 = w2sY(gp.wy1);
+    g.drawImage(gp.canvas, sx0, sy0, sx1 - sx0, sy1 - sy0);
   }
   g.fillStyle = 'rgba(0,0,0,.45)'; g.font = '10px sans-serif';
   g.fillText((TILE_SOURCES[state.baseLayer] || TILE_SOURCES.osm).attrib, 6, H - 6);
@@ -1509,16 +1518,155 @@ document.getElementById('layerSat').onclick = () => {
   render();
 };
 
+/* ── GeoTIFF 좌표계 ── */
+const KOREA_PROJ4_DEFS = {
+  3857: '+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs',
+  5178: '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=bessel +towgs84=-145.907,505.034,685.756,-1.162,2.347,1.592,6.342 +units=m +no_defs',
+  5179: '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5181: '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5185: '+proj=tmerc +lat_0=38 +lon_0=125 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5186: '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5187: '+proj=tmerc +lat_0=38 +lon_0=129 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5188: '+proj=tmerc +lat_0=38 +lon_0=131 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  32651: '+proj=utm +zone=51 +datum=WGS84 +units=m +no_defs',
+  32652: '+proj=utm +zone=52 +datum=WGS84 +units=m +no_defs',
+};
+function parseGeoKeys(dir) {
+  const keys = {};
+  if (!dir || dir.length < 4) return keys;
+  const n = dir[3];
+  for (let i = 0; i < n; i++) {
+    const o = 4 + i * 4;
+    keys[dir[o]] = { loc: dir[o + 1], count: dir[o + 2], val: dir[o + 3] };
+  }
+  return keys;
+}
+/* ifd(UTIF IFD)에서 픽셀→지리좌표 아핀변환 + 좌표계(EPSG)를 추출. GeoTIFF가 아니면 null */
+function extractGeoTransform(ifd) {
+  const geoDir = ifd.t34735;
+  if (!geoDir) return null;
+  const keys = parseGeoKeys(geoDir);
+  let epsg = null;
+  if (keys[3072] && keys[3072].val && keys[3072].val !== 32767) epsg = keys[3072].val;      // Projected CS
+  else if (keys[2048] && keys[2048].val && keys[2048].val !== 32767) epsg = keys[2048].val;  // Geographic CS
+  if (!epsg) return null;
+
+  const xform = ifd.t34264, scale = ifd.t33550, tie = ifd.t33922;
+  let toModel = null;
+  if (xform && xform.length >= 16) {
+    const m = xform;
+    toModel = (col, row) => ({ x: m[0] * col + m[1] * row + m[3], y: m[4] * col + m[5] * row + m[7] });
+  } else if (scale && tie && tie.length >= 6) {
+    const sx = scale[0], sy = scale[1];
+    const i0 = tie[0], j0 = tie[1], x0 = tie[3], y0 = tie[4];
+    toModel = (col, row) => ({ x: x0 + (col - i0) * sx, y: y0 - (row - j0) * sy });
+  }
+  if (!toModel) return null;
+  return { epsg, toModel };
+}
+function geoToLonLat(epsg, x, y) {
+  if (epsg === 4326) return { lon: x, lat: y };
+  if (typeof proj4 === 'undefined') return null;
+  const key = 'EPSG:' + epsg;
+  const def = KOREA_PROJ4_DEFS[epsg];
+  try {
+    if (def) proj4.defs(key, def);
+    const r = proj4(key, 'EPSG:4326', [x, y]);
+    if (!r || !isFinite(r[0]) || !isFinite(r[1])) return null;
+    return { lon: r[0], lat: r[1] };
+  } catch (e) { return null; }
+}
+function fitToGeoPhoto() {
+  const gp = state.geoPhoto; if (!gp) return;
+  const w = Math.abs(gp.wx1 - gp.wx0), h = Math.abs(gp.wy1 - gp.wy0);
+  if (!w || !h) return;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const s = Math.min(W / w, H / h) * 0.9;
+  state.view.scale = s;
+  const cx = (gp.wx0 + gp.wx1) / 2, cy = (gp.wy0 + gp.wy1) / 2;
+  state.view.x = cx - (W / 2) / s;
+  state.view.y = cy - (H / 2) / s;
+}
+function placeGeoImage(canvas, origW, origH, geo) {
+  const c00 = geo.toModel(0, 0), c11 = geo.toModel(origW, origH);
+  const ll00 = geoToLonLat(geo.epsg, c00.x, c00.y);
+  const ll11 = geoToLonLat(geo.epsg, c11.x, c11.y);
+  if (!ll00 || !ll11) {
+    showBanner('지원하지 않는 좌표계(EPSG:' + geo.epsg + ')라 위치 정합 없이 사진으로 불러옵니다.');
+    loadPhoto(canvas.toDataURL('image/png'));
+    return;
+  }
+  const wTL = lonLatToWorld(ll00.lon, ll00.lat), wBR = lonLatToWorld(ll11.lon, ll11.lat);
+  state.geoPhoto = { canvas, wx0: wTL.x, wy0: wTL.y, wx1: wBR.x, wy1: wBR.y };
+  document.getElementById('btnGeoClear').style.display = '';
+  if (state.mode !== 'map') setMode('map');
+  fitToGeoPhoto();
+  showBanner('GeoTIFF 좌표(EPSG:' + geo.epsg + ')를 인식해 지도 위 실제 위치에 배치했습니다.');
+  render();
+}
+document.getElementById('btnGeoClear').onclick = () => {
+  state.geoPhoto = null;
+  document.getElementById('btnGeoClear').style.display = 'none';
+  render();
+};
+
 /* 사진 열기 */
 document.getElementById('btnPhoto').onclick = () => document.getElementById('fileImg').click();
 document.getElementById('fileImg').addEventListener('change', e => {
   const f = e.target.files[0];
   if (!f) return;
+  openImageFile(f);
+  e.target.value = '';
+});
+function isTiffFile(f) {
+  return /\.tiff?$/i.test(f.name || '') || f.type === 'image/tiff' || f.type === 'image/tif';
+}
+function openImageFile(f) {
+  if (isTiffFile(f)) { loadTiffFile(f); return; }
   const rd = new FileReader();
   rd.onload = () => loadPhoto(rd.result);
   rd.readAsDataURL(f);
-  e.target.value = '';
-});
+}
+function loadTiffFile(f) {
+  if (typeof UTIF === 'undefined') {
+    showBanner('TIFF 디코더를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');
+    return;
+  }
+  showBanner('TIFF 파일을 변환하는 중입니다…');
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const buf = rd.result;
+      const ifds = UTIF.decode(buf);
+      if (!ifds || !ifds.length) throw new Error('no ifd');
+      UTIF.decodeImage(buf, ifds[0]);
+      const rgba = UTIF.toRGBA8(ifds[0]);
+      const w = ifds[0].width, h = ifds[0].height;
+      const src = document.createElement('canvas');
+      src.width = w; src.height = h;
+      src.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer || rgba), w, h), 0, 0);
+
+      const MAX_PX = 30e6;                     // 항공/드론 TIFF 등 초대형 이미지 안전장치
+      let outW = w, outH = h;
+      if (w * h > MAX_PX) {
+        const s = Math.sqrt(MAX_PX / (w * h));
+        outW = Math.max(1, Math.round(w * s)); outH = Math.max(1, Math.round(h * s));
+      }
+      const out = document.createElement('canvas');
+      out.width = outW; out.height = outH;
+      out.getContext('2d').drawImage(src, 0, 0, outW, outH);
+      if (outW !== w || outH !== h) showBanner('이미지가 매우 커서 화면 표시용으로 축소했습니다 (' + w + '×' + h + ' → ' + outW + '×' + outH + ').');
+
+      const geo = extractGeoTransform(ifds[0]);   // 원본 w,h 기준으로 지리좌표 계산(축소 전 픽셀 좌표계 그대로 사용)
+      if (geo) placeGeoImage(out, w, h, geo);
+      else loadPhoto(out.toDataURL('image/png'));
+    } catch (err) {
+      showBanner('TIFF 파일을 읽을 수 없습니다. 다른 뷰어로 PNG/JPG로 변환 후 다시 시도해 주세요.');
+    }
+  };
+  rd.onerror = () => showBanner('파일을 읽는 중 오류가 발생했습니다.');
+  rd.readAsArrayBuffer(f);
+}
 function loadPhoto(dataURL) {
   const img = new Image();
   img.onload = () => {
@@ -1539,11 +1687,7 @@ stage.addEventListener('dragover', e => e.preventDefault());
 stage.addEventListener('drop', e => {
   e.preventDefault();
   const f = e.dataTransfer.files && e.dataTransfer.files[0];
-  if (f && f.type.startsWith('image/')) {
-    const rd = new FileReader();
-    rd.onload = () => loadPhoto(rd.result);
-    rd.readAsDataURL(f);
-  }
+  if (f && (f.type.startsWith('image/') || isTiffFile(f))) openImageFile(f);
 });
 
 /* PNG 저장 */
@@ -1583,6 +1727,10 @@ document.getElementById('btnJson').onclick = () => {
     mode: state.mode, view: state.view,
     shapes: state.shapes, squadUnit: state.squadUnit, squadTeam: state.squadTeam,
     photoURL: state.mode === 'photo' ? state.photoURL : null,
+    geoPhoto: state.geoPhoto ? {
+      dataURL: state.geoPhoto.canvas.toDataURL('image/png'),
+      wx0: state.geoPhoto.wx0, wy0: state.geoPhoto.wy0, wx1: state.geoPhoto.wx1, wy1: state.geoPhoto.wy1,
+    } : null,
   };
   const b = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1610,6 +1758,21 @@ document.getElementById('fileJson').addEventListener('change', e => {
       document.title = state.projName ? state.projName + ' · 경비요도 제작' : '경비요도 제작';
       if (d.photoURL) loadPhoto(d.photoURL);
       else setMode(d.mode || 'map');
+      if (d.geoPhoto && d.geoPhoto.dataURL) {
+        const gimg = new Image();
+        gimg.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = gimg.width; c.height = gimg.height;
+          c.getContext('2d').drawImage(gimg, 0, 0);
+          state.geoPhoto = { canvas: c, wx0: d.geoPhoto.wx0, wy0: d.geoPhoto.wy0, wx1: d.geoPhoto.wx1, wy1: d.geoPhoto.wy1 };
+          document.getElementById('btnGeoClear').style.display = '';
+          render();
+        };
+        gimg.src = d.geoPhoto.dataURL;
+      } else {
+        state.geoPhoto = null;
+        document.getElementById('btnGeoClear').style.display = 'none';
+      }
       render();
     } catch { showBanner('계획 파일을 읽을 수 없습니다.'); }
   };
