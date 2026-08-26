@@ -110,6 +110,32 @@ button,select,input{font-family:inherit}
   background:rgba(245,165,36,.14);border:1px solid var(--am);color:var(--am);
   padding:7px 16px;border-radius:4px;font-size:12px;font-weight:700;display:none;
 }
+/* 앱 내부 모달 (분석 결과·보고서) */
+#modalWrap{
+  position:fixed; inset:0; z-index:200; display:none;
+  background:rgba(4,8,13,.78); backdrop-filter:blur(2px);
+}
+#modalWrap.on{display:flex; align-items:center; justify-content:center}
+#modalBox{
+  width:min(1080px,94vw); height:min(88vh,940px);
+  background:#0d1620; border:1px solid #24384a; border-radius:8px;
+  display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+#modalHead{
+  display:flex; align-items:center; gap:10px;
+  padding:11px 14px; border-bottom:1px solid #1e2c3c; background:#101d29;
+}
+#modalHead b{font-size:14px;color:#e6f1f8}
+#modalHead .sp{margin-left:auto;display:flex;gap:7px}
+#modalBody{flex:1; overflow:auto; background:#fff}
+#modalBody iframe{width:100%;height:100%;border:0;display:block}
+.mbtn{
+  padding:6px 12px;border-radius:4px;cursor:pointer;font-family:inherit;font-size:12px;
+  background:#16242f;color:#cfe0f0;border:1px solid #29455c;
+}
+.mbtn:hover{background:#1e3444}
+.mbtn.pri{background:#0d3a4a;border-color:#22d3ee;color:#22d3ee;font-weight:700}
 #loadMask{
   position:absolute;inset:0;z-index:30;background:#060b10;display:grid;place-items:center;
   color:var(--txt-1);font-family:var(--mono);font-size:12px;text-align:center;line-height:1.9;
@@ -149,6 +175,22 @@ button,select,input{font-family:inherit}
 .btn.danger{background:#33101a;border-color:#7a2032;color:#ff6b81}
 .btn.danger:hover{background:#45151f}
 .btn.wide{flex:1 1 100%}
+/* 사전 분석 중 — 조작을 막아 계산이 중간에 깨지지 않게 한다 */
+#side.busy .sec{opacity:.42;pointer-events:none}
+#side.busy #secData{opacity:1;pointer-events:auto}
+#side.busy #secData .btn:not(#btnPreDiag){opacity:.42;pointer-events:none}
+#mapPane.busy{cursor:progress}
+#mapPane.busy #mapCanvasHost{pointer-events:none}
+/* 사전 분석 진행률 막대 */
+.progbar{height:7px;background:#16222e;border:1px solid var(--line-2);border-radius:4px;
+         overflow:hidden;margin-top:6px}
+.progbar i{display:block;height:100%;width:0;border-radius:3px;
+           background:linear-gradient(90deg,#0e7490,#22d3ee);transition:width .12s linear}
+.progtxt{font-family:var(--mono);font-size:11px;color:var(--txt-1);line-height:1.6}
+.progtxt em{font-style:normal;color:var(--txt-2)}
+/* 슬라이더 인원과 실제 생성 인원이 다를 때 — 재생성 필요 표시 */
+.btn.need{background:#3a2c0c;border-color:var(--am);color:var(--am);
+          box-shadow:0 0 0 1px rgba(245,165,36,.35) inset}
 .btn.primary{background:#0d3a4a;border-color:var(--cy);color:var(--cy);font-weight:700}
 .btn.primary:hover{background:#12556b}
 .btn.primary.dirty{background:#123f52;box-shadow:0 0 0 1px var(--cy) inset,0 0 10px rgba(34,211,238,.35)}
@@ -307,7 +349,7 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
     <!-- ===================== 우: 제어 패널 ===================== -->
     <div id="side">
 
-      <div class="sec" id="secVenue">
+      <div class="sec closed" id="secVenue">
         <h3><span class="idx">00</span>시뮬레이션 구역<span class="arw">▼</span></h3>
         <div class="sec-body">
           <div class="lbl">장소 프리셋</div>
@@ -342,7 +384,10 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
           <div class="row mb">
             <button class="btn" id="btnStageEdit">무대 편집</button>
             <button class="btn" id="btnStageDraw">다시 그리기</button>
-            <button class="btn" id="btnStageReset">기본</button>
+          </div>
+          <div class="row mb">
+            <button class="btn" id="btnStageReset">기본 위치</button>
+            <button class="btn danger" id="btnStageDelete">무대 삭제</button>
           </div>
           <div class="row mb">
             <div style="flex:1">
@@ -401,7 +446,7 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
         </div>
       </div>
 
-      <div class="sec" id="secGate">
+      <div class="sec closed" id="secGate">
         <h3><span class="idx">02</span>출입구 · 병목 설정<span class="arw">▼</span></h3>
         <div class="sec-body">
           <span class="lbl">출입구 폭 (병목 시뮬레이션)</span>
@@ -417,7 +462,7 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
         </div>
       </div>
 
-      <div class="sec" id="secEvent">
+      <div class="sec closed" id="secEvent">
         <h3><span class="idx">03</span>행사 이벤트<span class="arw">▼</span></h3>
         <div class="sec-body">
           <div class="row mb">
@@ -443,7 +488,7 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
         </div>
       </div>
 
-      <div class="sec" id="secPolice">
+      <div class="sec closed" id="secPolice">
         <h3><span class="idx">04</span>경찰 통제<span class="arw">▼</span></h3>
         <div class="sec-body">
           <span class="lbl">통제선 (Control Line)</span>
@@ -492,7 +537,7 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
         </div>
       </div>
 
-      <div class="sec" id="secEvac">
+      <div class="sec closed" id="secEvac">
         <h3><span class="idx">05</span>대피 분석<span class="arw">▼</span></h3>
         <div class="sec-body">
           <div class="hint" style="margin-bottom:8px">
@@ -507,7 +552,7 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
         </div>
       </div>
 
-      <div class="sec" id="secView">
+      <div class="sec closed" id="secView">
         <h3><span class="idx">06</span>표시 옵션<span class="arw">▼</span></h3>
         <div class="sec-body">
           <span class="lbl">밀집도 측정 반경</span>
@@ -532,6 +577,13 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
           <div class="hint" id="terrainInfo">강·건물·도로는 통행불가로 처리됩니다. 브러시로 직접 지정할 수도 있습니다.</div>
           <input type="file" id="fileTerrain" accept=".json" style="display:none">
 
+          <div class="lbl" style="margin-top:2px">지도 보기</div>
+          <div class="row mb">
+            <button class="btn" id="btnView2D">2D 평면도</button>
+            <button class="btn" id="btnView3D">3D 지구본</button>
+          </div>
+          <div class="hint" id="viewInfo" style="margin-bottom:8px"></div>
+
           <div class="lbl" style="margin-top:2px">배경 지도</div>
           <div class="row mb">
             <button class="btn on" data-base="sat">위성</button>
@@ -549,14 +601,34 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
         </div>
       </div>
 
-      <div class="sec" id="secMix">
+      <div class="sec closed" id="secMix">
         <h3><span class="idx">07</span>군중 구성<span class="arw">▼</span></h3>
         <div class="sec-body"><div id="mixList"></div></div>
       </div>
 
-      <div class="sec" id="secData">
-        <h3><span class="idx">08</span>데이터 저장<span class="arw">▼</span></h3>
+      <div class="sec closed" id="secData">
+        <h3><span class="idx">08</span>분석 보고서 · 저장<span class="arw">▼</span></h3>
         <div class="sec-body">
+          <div class="lbl">사전 분석 (시작하지 않고 결과 확인)</div>
+          <div class="row mb">
+            <button class="btn primary wide" id="btnPreDiag">⚡ 현재 배치 진단</button>
+          </div>
+          <div class="hint" id="preInfo" style="margin-bottom:10px">
+            화면에 그리지 않고 물리만 계산해 <b>대피</b>와 <b>상시통행</b> 결과를 바로 보여줍니다.
+          </div>
+          <div class="lbl">보고서</div>
+          <div class="row mb">
+            <button class="btn primary wide" id="btnReport">📄 위험도 분석 보고서 열기</button>
+          </div>
+          <div class="row mb">
+            <button class="btn" id="btnReportSave">보고서 저장(HTML)</button>
+            <button class="btn" id="btnHeatReset">위험 이력 초기화</button>
+          </div>
+          <div class="hint" id="reportInfo" style="margin-bottom:10px">
+            시뮬레이션 전 구간의 <b>누적 최대 밀집도</b>를 지도로 그리고,
+            병목 지점과 원인을 표로 정리합니다. 새 창에서 <b>Ctrl+P</b> 로 PDF 저장할 수 있습니다.
+          </div>
+          <div class="lbl">원시 데이터</div>
           <div class="row">
             <button class="btn" id="btnCSV">CSV</button>
             <button class="btn" id="btnJSON">JSON</button>
@@ -594,6 +666,21 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
     </div>
   </div>
 
+
+<div id="modalWrap">
+  <div id="modalBox">
+    <div id="modalHead">
+      <b id="modalTitle">분석 결과</b>
+      <div class="sp">
+        <button class="mbtn" id="mbPrint">🖨 인쇄 · PDF</button>
+        <button class="mbtn" id="mbSave">저장(HTML)</button>
+        <button class="mbtn" id="mbNew">새 창</button>
+        <button class="mbtn pri" id="mbClose">닫기</button>
+      </div>
+    </div>
+    <div id="modalBody"><iframe id="modalFrame"></iframe></div>
+  </div>
+</div>
 </div><!-- /app -->
 
 <script>
@@ -1110,6 +1197,23 @@ class SiteLayout{
     }
     return n? inside/n : 1;
   }
+
+  /** 무대 제거 — 무대가 없는 행사(집회·마라톤 등)를 위해 지원한다.
+   *  무대가 없으면 공연·유명인 이벤트는 구역 중앙을 목표로 대체한다. */
+  removeStage(){
+    this.stage=null;
+    CONFIG.stage=null;
+    CONFIG.stageFront=null;
+    CONFIG.stageFrontPoly=null;
+    CONFIG.stageArc=null;
+    CONFIG.celeb=null;
+    if(this.obstacles){
+      const i=this.obstacles.findIndex(o=>o.icon==='stage');
+      if(i>=0) this.obstacles.splice(i,1);
+    }
+    return { ok:true };
+  }
+  hasStage(){ return !!this.stage; }
 
   /** 회전 반영된 무대 네 모서리 */
   stageCorners(){
@@ -1657,14 +1761,16 @@ class PathFinder{
    *  붐비는 셀을 지나갈 때 비용을 올려 경로 자체가 분산되게 한다. */
   setCongestion(costArr){ this.cong=costArr; }
 
-  computeField(name, targetCells){
+  computeField(name, targetCells, opts){
     let f=this.fields.get(name);
     if(!f){
       f={ dist:new Float64Array(this.N), dirX:new Float32Array(this.N), dirY:new Float32Array(this.N) };
       this.fields.set(name,f);
     }
     const dist=f.dist, cols=this.cols, rows=this.rows, cs=this.cs, blocked=this.blocked;
-    const cong=this.cong;
+    /* noCong : 혼잡 비용을 무시하고 순수 최단거리로 만든다.
+       우회가 비현실적인 흐름(유명인 몰림 등)에 쓴다. */
+    const cong=(opts&&opts.noCong)?null:this.cong;
     dist.fill(Infinity);
     const heap=this.heap; heap.clear();
     for(const c of targetCells){ if(blocked[c]===0 && dist[c]!==0){ dist[c]=0; heap.push(0,c); } }
@@ -1938,7 +2044,7 @@ class TileLayer{
     };
     img.onerror=()=>{
       if(nextUrl()) return;
-      this.pending--; this.failed++; this.cache.set(key,null);
+      this.pending--; this.failed++; img._dead=true; this.cache.set(key,null);
     };
     img.onload=()=>{
       /* 서버가 'Map data not available' 안내 타일을 HTTP 200 으로 주는 경우가 있다.
@@ -1959,9 +2065,8 @@ class TileLayer{
     return img;
   }
 
-  /** 현재 화면 범위에 해당하는 타일을 그린다 */
-  draw(ctx, rnd, w, h){
-    if(!this.enabled) return;
+  /** 화면 범위 → 타일 줌/인덱스 범위. draw / prefetch 가 공유한다. */
+  _range(rnd, w, h){
     const o=CONFIG.origin;
     // 화면 네 모서리의 로컬 좌표 → 경위도 범위
     const c0=rnd.unproject(0,0), c1=rnd.unproject(w,0),
@@ -1978,7 +2083,40 @@ class TileLayer{
 
     const x0=Math.floor(TileLayer.lonToTileX(A.lon,z)), x1=Math.floor(TileLayer.lonToTileX(B.lon,z));
     const y0=Math.floor(TileLayer.latToTileY(A.lat,z)), y1=Math.floor(TileLayer.latToTileY(B.lat,z));
-    if((x1-x0+1)*(y1-y0+1) > 220) return;             // 과도한 타일 요청 방지
+    if((x1-x0+1)*(y1-y0+1) > 220) return null;        // 과도한 타일 요청 방지
+    return {z,x0,x1,y0,y1};
+  }
+
+  /** 해당 화면 범위의 타일을 미리 요청하고, 전부 뜰 때까지 기다린다.
+   *  보고서 이미지는 한 번에 합성되므로 타일이 준비된 뒤에 그려야 한다. */
+  prefetch(rnd, w, h, timeoutMs){
+    if(!this.enabled) return Promise.resolve(0);
+    const R=this._range(rnd,w,h);
+    if(!R) return Promise.resolve(0);
+    const imgs=[];
+    for(let ty=R.y0; ty<=R.y1; ty++)
+      for(let tx=R.x0; tx<=R.x1; tx++){
+        const im=this._get(R.z,tx,ty);
+        if(im) imgs.push(im);
+      }
+    if(!imgs.length) return Promise.resolve(0);
+    const t0=Date.now(), lim=timeoutMs||3500;
+    return new Promise(res=>{
+      const tick=()=>{
+        const left=imgs.filter(im=>!im._ok && !im._dead).length;
+        if(left===0 || Date.now()-t0>lim) res(imgs.filter(im=>im._ok).length);
+        else setTimeout(tick,120);
+      };
+      tick();
+    });
+  }
+
+  /** 현재 화면 범위에 해당하는 타일을 그린다 */
+  draw(ctx, rnd, w, h){
+    if(!this.enabled) return;
+    const R=this._range(rnd,w,h);
+    if(!R) return;
+    const z=R.z, x0=R.x0, x1=R.x1, y0=R.y0, y1=R.y1;
 
     ctx.save();
     ctx.globalAlpha=this.opacity;
@@ -2264,6 +2402,7 @@ class Renderer2D{
             this.stageEdit.mode='size'; this.stageEdit.i=i; return; }
         }
         const S=this.site.stage;
+        if(!S) return;
         const c=Math.cos(-S.rot), sn=Math.sin(-S.rot);
         const lx=(w.x-S.cx)*c-(w.y-S.cy)*sn, ly=(w.x-S.cx)*sn+(w.y-S.cy)*c;
         if(Math.abs(lx)<=S.w/2 && Math.abs(ly)<=S.h/2){
@@ -3426,6 +3565,12 @@ class HeatMap{
     this.count=new Float32Array(this.N);   // 셀별 인원수
     this.local=new Float32Array(this.N);   // 국소밀도(행동모델용, 반경 ~5.6m)
     this.disp =new Float32Array(this.N);   // 표시밀도(선택 반경)
+    /* 누적 기록 — 보고서용.
+       순간 밀집도만 보면 병목 지점을 놓친다. 시뮬레이션 전 구간에서
+       각 지점이 겪은 '최대' 밀집도와 '고밀도 지속시간'을 함께 남긴다. */
+    this.peak =new Float32Array(this.N);   // 지점별 최대 밀집도
+    this.dwell=new Float32Array(this.N);   // 위험밀도(3명/㎡) 이상 누적 초
+    this.peakT=new Float32Array(this.N);   // 최대치가 발생한 시각(초)
     this.kernel=null; this.kArea=1;
     /* 기본 측정반경 5m — 국소 밀집 판정용.
        10m 는 면적 314㎡라 주변까지 평균내어 실제 위험 지점의 밀도를
@@ -3518,6 +3663,45 @@ class HeatMap{
     const cx=clamp(Math.floor((x-this.minX)/this.cs),0,this.cols-1);
     const cy=clamp(Math.floor((y-this.minY)/this.cs),0,this.rows-1);
     return cy*this.cols+cx;
+  }
+  /** 누적 기록 갱신 (통계 주기마다 호출) */
+  accumulate(t, dt){
+    const d=this.disp, pk=this.peak, dw=this.dwell, pt=this.peakT, n=this.N;
+    for(let i=0;i<n;i++){
+      const v=d[i];
+      if(v>pk[i]){ pk[i]=v; pt[i]=t; }
+      if(v>=3.0) dw[i]+=dt;
+    }
+  }
+  resetAccum(){
+    this.peak.fill(0); this.dwell.fill(0); this.peakT.fill(0);
+  }
+  /** 누적 최대 밀집 상위 지점 목록 */
+  hotspots(site, topN, src){
+    const out=[];
+    const cols=this.cols, cs=this.cs;
+    /* src 를 주면 그 스냅샷(사전분석 결과 등)에서 뽑는다.
+       사전분석은 끝나면서 현재 누적치를 원상복구하므로,
+       보고서는 반드시 분석 당시의 사본을 봐야 한다. */
+    const pk=(src&&src.peak)||this.peak;
+    const dw=(src&&src.dwell)||this.dwell;
+    const pt=(src&&src.peakT)||this.peakT;
+    for(let i=0;i<this.N;i++){
+      if(pk[i]<1.0) continue;
+      const gx=i%cols, gy=(i/cols)|0;
+      const x=this.minX+(gx+0.5)*cs, y=this.minY+(gy+0.5)*cs;
+      out.push({x, y, peak:pk[i], dwell:dw[i], t:pt[i]});
+    }
+    out.sort((a,b)=>b.peak-a.peak);
+    // 서로 가까운 지점은 하나로 묶는다 (같은 병목의 중복 집계 방지)
+    const picked=[];
+    for(const c of out){
+      if(picked.length>=(topN||6)) break;
+      let dup=false;
+      for(const q of picked) if(Math.hypot(q.x-c.x,q.y-c.y)<18){ dup=true; break; }
+      if(!dup) picked.push(c);
+    }
+    return picked;
   }
   densityAt(x,y){ return this.local[this._idx(x,y)]; }
   displayAt(x,y){ return this.disp[this._idx(x,y)]; }
@@ -4096,7 +4280,17 @@ class CrowdManager{
   stageFrontPoint(tight){
     const A=CONFIG.stageArc;
     const site=this.sim.site, pf=this.sim.path;
-    if(!A) return this.randomUniform();
+    /* 무대가 없으면 구역 중앙 부근으로 모인다 (집회·행사 개최 지점 대체) */
+    if(!A){
+      const c=site.centroid();
+      const r=Math.min(site.hw,site.hh)*(tight?0.28:0.55);
+      for(let k=0;k<14;k++){
+        const a2=Math.random()*6.2832, rr=Math.sqrt(Math.random())*r;
+        const x=c.x+Math.cos(a2)*rr, y=c.y+Math.sin(a2)*rr;
+        if(site.isInsideVenue(x,y)&&!pf.isBlocked(x,y)) return {x,y};
+      }
+      return this.randomUniform();
+    }
     for(let k=0;k<14;k++){
       /* 각도 : 정면(0)에 치우치도록 가우시안에 가깝게 뽑는다.
          무대 정면이 가장 붐비고 좌우 끝으로 갈수록 성글어진다. */
@@ -4123,8 +4317,14 @@ class CrowdManager{
     }
     return this.randomUniform();
   }
+  /** 유명인 등장 지점 — 무대가 없으면 구역 중앙을 쓴다 */
+  celebPoint(){
+    if(CONFIG.celeb) return CONFIG.celeb;
+    const c=this.sim.site.centroid();
+    return { x:c.x, y:c.y, r:Math.max(8,Math.min(this.sim.site.hw,this.sim.site.hh)*0.14) };
+  }
   goToCeleb(instant){
-    const C=CONFIG.celeb;
+    const C=this.celebPoint();
     for(const p of this.people){
       if(p.state==='post'||p.exited) continue;
       p.setField('celeb');
@@ -4930,6 +5130,681 @@ class Statistics{
 /* =========================================================
  * 12. UIManager — DOM 바인딩 / 차트 / 패널 갱신
  * ========================================================= */
+
+/* =========================================================
+ * 위험도 분석 보고서
+ *   시뮬레이션 전 구간의 '누적 최대 밀집도'를 그림으로 그려
+ *   어느 지점이 병목이 되어 위험해지는지 한눈에 보여준다.
+ *   순간 히트맵과 달리, 지나간 위험까지 모두 남는다.
+ * ========================================================= */
+class RiskReport{
+  constructor(sim){ this.sim=sim; }
+
+  /* ---------- 보고서 지도용 투영 ----------
+     TileLayer.draw 가 요구하는 인터페이스(project/unproject/view.scale)를
+     그대로 흉내내므로, 화면 렌더러와 동일한 배경지도를 쓸 수 있다. */
+  _proj(W,H){
+    const B=this.sim.site.bbox;
+    const pad=Math.max(40, Math.max(B.x1-B.x0, B.y1-B.y0)*0.14);
+    const x0=B.x0-pad, x1=B.x1+pad, y0=B.y0-pad, y1=B.y1+pad;
+    const sc=Math.min(W/(x1-x0), H/(y1-y0));
+    const ox=(W-(x1-x0)*sc)/2, oy=(H-(y1-y0)*sc)/2;
+    return {
+      sc, W, H,
+      view:{ scale:sc, cx:(x0+x1)/2, cy:(y0+y1)/2, rot:0 },
+      project(x,y,out){ out=out||{}; out.x=ox+(x-x0)*sc; out.y=H-oy-(y-y0)*sc; return out; },
+      unproject(sx,sy){ return { x:x0+(sx-ox)/sc, y:y0+(H-oy-sy)/sc }; }
+    };
+  }
+
+  /** 사전분석 결과 → 누적격자 스냅샷 (대피/상시통행 중 나쁜 쪽) */
+  _snapshotOf(diag){
+    if(!diag) return null;
+    const srcs=[diag.evac, diag.flow].filter(s=>s && s.peakMap);
+    if(!srcs.length) return null;
+    const N=this.sim.heat.N;
+    const pk=new Float32Array(N), dw=new Float32Array(N), pt=new Float32Array(N);
+    for(let i=0;i<N;i++){
+      for(const s of srcs){
+        const v=s.peakMap[i]||0;
+        if(v>pk[i]){ pk[i]=v; pt[i]=s.peakTMap?s.peakTMap[i]:0; }
+        const d=s.dwellMap?s.dwellMap[i]:0;
+        if(d>dw[i]) dw[i]=d;
+      }
+    }
+    return {peak:pk, dwell:dw, peakT:pt};
+  }
+
+  /** 배경지도 타일을 미리 받아둔다 (보고서는 한 번에 합성되므로) */
+  prefetchTiles(W,H){
+    const tl=this.sim.map && this.sim.map.tiles;
+    if(!tl) return Promise.resolve(0);
+    try{ return tl.prefetch(this._proj(W||980,H||700), W||980, H||700, 3500); }
+    catch(e){ return Promise.resolve(0); }
+  }
+
+  /* ---------- 위험도 지도 이미지 생성 ---------- */
+  /** 누적 최대 밀집도를 색으로 칠한 평면도를 캔버스로 반환.
+   *  @param src   누적격자 스냅샷 (없으면 현재 sim.heat 사용)
+   *  @param noTiles  true 면 배경지도를 빼고 그린다 (캔버스 오염 대비) */
+  renderMap(W, H, src, noTiles){
+    const sim=this.sim, site=sim.site, heat=sim.heat;
+    const pr=this._proj(W,H);
+    const sc=pr.sc;
+    const P=(x,y)=>pr.project(x,y,{});
+
+    const cv=document.createElement('canvas');
+    cv.width=W; cv.height=H;
+    const c=cv.getContext('2d');
+    c.fillStyle='#0b1017'; c.fillRect(0,0,W,H);
+
+    // 0) 실제 배경지도(위성영상/일반지도) — '지도 기반' 히트맵의 바탕
+    if(!noTiles && sim.map && sim.map.tiles && sim.map.tiles.enabled){
+      try{
+        sim.map.tiles.draw(c, pr, W, H);
+        // 밀집도 색이 묻히지 않도록 살짝 어둡게 깐다
+        c.fillStyle='rgba(6,12,20,0.42)'; c.fillRect(0,0,W,H);
+      }catch(e){}
+    }
+
+    // 1) 누적 최대 밀집도 셀
+    const pk=(src&&src.peak)||heat.peak;
+    const cs=heat.cs, cols=heat.cols;
+    const px=Math.ceil(cs*sc)+1;
+    for(let i=0;i<heat.N;i++){
+      const v=pk[i];
+      if(v<0.25) continue;
+      const gx=i%cols, gy=(i/cols)|0;
+      const p=P(heat.minX+gx*cs, heat.minY+(gy+1)*cs);
+      if(p.x<-px||p.y<-px||p.x>W+px||p.y>H+px) continue;
+      const col=heatColor(v);
+      c.fillStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+
+        clamp(0.25+v*0.16,0.25,0.92).toFixed(3)+')';
+      c.fillRect(p.x, p.y, px, px);
+    }
+
+    // 2) 행사장 경계
+    if(site.poly&&site.poly.length>=3){
+      c.beginPath();
+      site.poly.forEach((q,i)=>{ const p=P(q.x,q.y); i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y); });
+      c.closePath();
+      c.strokeStyle='rgba(34,211,238,0.85)'; c.lineWidth=2; c.stroke();
+    }
+
+    // 3) 펜스
+    c.strokeStyle='rgba(120,150,175,0.7)'; c.lineWidth=1.6; c.beginPath();
+    for(const sg of site.buildFenceSegments()){
+      const a=P(sg.x1,sg.y1), b=P(sg.x2,sg.y2);
+      c.moveTo(a.x,a.y); c.lineTo(b.x,b.y);
+    }
+    c.stroke();
+
+    // 4) 무대
+    const SC=site.stageCorners?site.stageCorners():[];
+    if(SC.length===4){
+      c.beginPath();
+      SC.forEach((q,i)=>{ const p=P(q.x,q.y); i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y); });
+      c.closePath();
+      c.fillStyle='rgba(186,104,200,0.45)'; c.fill();
+      c.strokeStyle='#ba68c8'; c.lineWidth=1.5; c.stroke();
+      const m=P(site.stage.cx, site.stage.cy);
+      c.fillStyle='#f0dcf5'; c.font='600 12px sans-serif'; c.textAlign='center';
+      c.fillText('무대', m.x, m.y+4);
+    }
+
+    // 5) 통제선
+    if(site.controlLines.length){
+      for(const L of site.controlLines){
+        const a=P(L.x1,L.y1), b=P(L.x2,L.y2);
+        c.strokeStyle='#111'; c.lineWidth=6;
+        c.setLineDash([]); c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke();
+        c.strokeStyle='#ffd400'; c.lineWidth=6;
+        c.setLineDash([9,9]); c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke();
+        c.setLineDash([]);
+      }
+    }
+
+    // 6) 출입구
+    c.font='600 11px sans-serif'; c.textAlign='center';
+    for(const g of site.gates){
+      const p=P(g.x,g.y);
+      c.fillStyle=g.open?g.color:'#ff5252';
+      c.beginPath(); c.arc(p.x,p.y,5,0,6.2832); c.fill();
+      c.strokeStyle='rgba(0,0,0,0.6)'; c.lineWidth=1.5; c.stroke();
+      c.fillStyle='#cfe0f0';
+      c.fillText(g.name.replace(/\(.*\)/,'')+(g.open?'':'(폐쇄)'),
+                 p.x+g.nx*26, p.y-g.ny*26+4);
+    }
+
+    // 7) 위험 지점 번호 표시
+    const spots=this.sim.heat.hotspots(site, 5, src);
+    spots.forEach((s,i)=>{
+      const p=P(s.x,s.y);
+      c.beginPath(); c.arc(p.x,p.y,15,0,6.2832);
+      c.strokeStyle= s.peak>=6 ? '#ff1744' : s.peak>=4.5 ? '#ff5252' : '#ffb300';
+      c.lineWidth=2.5; c.stroke();
+      c.fillStyle=c.strokeStyle;
+      c.beginPath(); c.arc(p.x,p.y-22,10,0,6.2832); c.fill();
+      c.fillStyle='#fff'; c.font='700 12px sans-serif'; c.textAlign='center';
+      c.fillText(String(i+1), p.x, p.y-18);
+    });
+
+    // 8) 범례 · 축척
+    this._legend(c, W, H, sc);
+    return {canvas:cv, spots};
+  }
+
+  _legend(c, W, H, sc){
+    const items=[[0.8,'0 – 1.5  원활'],[2.2,'1.5 – 3.0  혼잡'],[3.7,'3.0 – 4.5  정체'],
+                 [5.2,'4.5 – 6.0  위험'],[7.0,'6.0 +  압사위험']];
+    const bw=168, bh=items.length*19+30;
+    const bx=12, by=H-bh-12;
+    c.fillStyle='rgba(8,14,22,0.88)'; c.fillRect(bx,by,bw,bh);
+    c.strokeStyle='#1e2c3c'; c.lineWidth=1; c.strokeRect(bx,by,bw,bh);
+    c.fillStyle='#9fb3c8'; c.font='600 11px sans-serif'; c.textAlign='left';
+    c.fillText('누적 최대 밀집도 (명/㎡)', bx+10, by+17);
+    items.forEach(([v,label],i)=>{
+      const col=heatColor(v), yy=by+30+i*19;
+      c.fillStyle='rgb('+col[0]+','+col[1]+','+col[2]+')';
+      c.fillRect(bx+10, yy-8, 20, 11);
+      c.fillStyle='#cfe0f0'; c.font='11px monospace';
+      c.fillText(label, bx+38, yy+1);
+    });
+    // 축척
+    const m=50, w=m*sc;
+    c.strokeStyle='#8aa0b4'; c.lineWidth=2;
+    c.beginPath();
+    c.moveTo(W-w-24, H-22); c.lineTo(W-24, H-22);
+    c.moveTo(W-w-24, H-27); c.lineTo(W-w-24, H-17);
+    c.moveTo(W-24, H-27);   c.lineTo(W-24, H-17);
+    c.stroke();
+    c.fillStyle='#8aa0b4'; c.font='11px monospace'; c.textAlign='center';
+    c.fillText('50 m', W-w/2-24, H-28);
+  }
+
+  /* ---------- 보고서 HTML 생성 ----------
+     diag 를 넘기면 '사전 분석 예측' 절이 앞에 추가된다. */
+  build(diag){
+    const sim=this.sim, site=sim.site, st=sim.stats.cur;
+    /* 사전분석 결과가 있으면 그때 기록된 누적격자를 쓴다.
+       (분석 종료 시 sim.heat 는 이미 초기화되어 비어 있다) */
+    let src=this._snapshotOf(diag);
+    /* 아직 아무것도 누적되지 않았다면(생성 직후 등) 현재 순간 밀집도라도 그린다.
+       그러지 않으면 지도가 통째로 비어 '히트맵이 안 나온다'로 보인다. */
+    let live=false;
+    if(!src){
+      let mx=0; for(let i=0;i<sim.heat.N;i++) if(sim.heat.peak[i]>mx) mx=sim.heat.peak[i];
+      if(mx<0.25){
+        let dm=0; for(let i=0;i<sim.heat.N;i++) if(sim.heat.disp[i]>dm) dm=sim.heat.disp[i];
+        if(dm>=0.25){
+          const z=new Float32Array(sim.heat.N);
+          src={peak:sim.heat.disp, dwell:z, peakT:z};
+          live=true;
+        }
+      }
+    }
+    let r=this.renderMap(980, 700, src);
+    let img='';
+    try{ img=r.canvas.toDataURL('image/png'); }
+    catch(e){
+      // 배경지도 타일이 CORS 없이 들어와 캔버스가 오염된 경우 → 지도 없이 재시도
+      try{ r=this.renderMap(980, 700, src, true); img=r.canvas.toDataURL('image/png'); }
+      catch(e2){ img=''; }
+    }
+    const spots=r.spots;
+
+    const grade=(v)=> v>=6?'압사위험': v>=4.5?'위험': v>=3?'정체': v>=1.5?'혼잡':'원활';
+    const gcol=(v)=> v>=6?'#ff1744': v>=4.5?'#ff5252': v>=3?'#ff9100': v>=1.5?'#ffea00':'#00c853';
+    const fmtT=(s)=>{ s=Math.max(0,Math.round(s)); return String((s/60)|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+
+    // 병목 원인 추정
+    const cause=(s)=>{
+      let near=null, nd=1e9;
+      for(const g of site.gates){
+        const d=Math.hypot(s.x-g.x, s.y-g.y);
+        if(d<nd){ nd=d; near=g; }
+      }
+      if(near && nd<28) return '출입구 «'+near.name.replace(/\(.*\)/,'')+'» 통과 병목 (폭 '+near.width+'m)';
+      if(site.stage){
+        const S=site.stage;
+        const c=Math.cos(-S.rot), sn=Math.sin(-S.rot);
+        const lx=(s.x-S.cx)*c-(s.y-S.cy)*sn, ly=(s.x-S.cx)*sn+(s.y-S.cy)*c;
+        if(Math.abs(lx)<S.w/2+22 && Math.abs(ly)<S.h/2+28) return '무대 전면 관람 밀집';
+      }
+      for(const L of site.controlLines){
+        if(distPointSeg(s.x,s.y,L.x1,L.y1,L.x2,L.y2)<14) return '통제선 우회 지점 정체';
+      }
+      const B=site.bbox;
+      if(Math.min(Math.abs(s.x-B.x0),Math.abs(s.x-B.x1),
+                  Math.abs(s.y-B.y0),Math.abs(s.y-B.y1))<18) return '경계·펜스 인접 정체';
+      return '구역 내 흐름 교차 지점';
+    };
+
+    const rows=spots.map((s,i)=>`
+      <tr>
+        <td class="n"><span class="badge" style="background:${gcol(s.peak)}">${i+1}</span></td>
+        <td class="mono">${Math.round(s.x)}, ${Math.round(s.y)}</td>
+        <td class="mono b" style="color:${gcol(s.peak)}">${s.peak.toFixed(2)}</td>
+        <td>${grade(s.peak)}</td>
+        <td class="mono">${fmtT(s.t)}</td>
+        <td class="mono">${s.dwell>=1?Math.round(s.dwell)+'초':'—'}</td>
+        <td>${cause(s)}</td>
+      </tr>`).join('');
+
+    const gateRows=site.gates.map(g=>`
+      <tr>
+        <td><span class="dot" style="background:${g.open?g.color:'#ff5252'}"></span>${g.name}</td>
+        <td class="mono">${g.width} m</td>
+        <td>${g.open?'개방':'<span style="color:#ff6b81">폐쇄</span>'}</td>
+        <td class="mono b">${g.count.toLocaleString()}</td>
+      </tr>`).join('');
+
+    const totalPass=site.gates.reduce((a,g)=>a+g.count,0);
+    const maxG=site.gates.reduce((a,g)=>g.count>a.count?g:a, site.gates[0]);
+    const minG=site.gates.filter(g=>g.open).reduce((a,g)=>g.count<a.count?g:a,
+                site.gates.find(g=>g.open)||site.gates[0]);
+    const imbalance = totalPass>0 ? ((maxG.count-minG.count)/totalPass*100) : 0;
+
+    const worst=spots.length?spots[0]:null;
+    const evacEl=sim.stats.evacElapsed?sim.stats.evacElapsed():0;
+
+    // 결론·권고
+    const rec=[];
+    if(worst && worst.peak>=6)
+      rec.push('<b style="color:#ff5252">최대 '+worst.peak.toFixed(1)+'명/㎡</b> 로 압사 위험 구간에 도달했습니다. 해당 지점의 유입을 차단하거나 우회 동선을 확보해야 합니다.');
+    else if(worst && worst.peak>=4.5)
+      rec.push('최대 '+worst.peak.toFixed(1)+'명/㎡ 로 <b>위험</b> 수준입니다. 사전 통제가 필요합니다.');
+    else if(worst && worst.peak>=3)
+      rec.push('최대 '+worst.peak.toFixed(1)+'명/㎡ 로 보행이 어려운 <b>정체</b> 구간이 발생했습니다.');
+    else
+      rec.push('시뮬레이션 전 구간에서 위험 수준의 밀집은 발생하지 않았습니다.');
+
+    if(spots.length){
+      const gateSpots=spots.filter(s=>cause(s).indexOf('출입구')===0);
+      if(gateSpots.length)
+        rec.push('위험 지점 '+spots.length+'곳 중 <b>'+gateSpots.length+'곳이 출입구 병목</b>입니다. 출입구 폭 확대 또는 추가 개방을 검토하세요.');
+    }
+    if(imbalance>25)
+      rec.push('출입구별 통과 인원 편차가 <b>'+imbalance.toFixed(0)+'%</b> 로 큽니다. «'+
+        maxG.name.replace(/\(.*\)/,'')+'» 에 집중되고 있어 인력 유도로 분산이 필요합니다.');
+    if(st.risk>=75) rec.push('종합 위험지수 <b style="color:#ff1744">'+st.risk.toFixed(0)+'점(심각)</b> — 행사 계획 재검토를 권고합니다.');
+    else if(st.risk>=50) rec.push('종합 위험지수 '+st.risk.toFixed(0)+'점(경계) — 통제 계획 보완이 필요합니다.');
+
+    const now=new Date();
+    const when=now.getFullYear()+'년 '+(now.getMonth()+1)+'월 '+now.getDate()+'일 '+
+      String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+
+    return `<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
+<title>인파 밀집 위험도 분석 보고서</title>
+<style>
+ *{box-sizing:border-box}
+ body{margin:0;padding:28px 34px;background:#fff;color:#1a1a1a;
+      font-family:'맑은 고딕','Malgun Gothic',system-ui,sans-serif;font-size:13px;line-height:1.65}
+ h1{font-size:21px;margin:0 0 4px;letter-spacing:-.3px}
+ h2{font-size:15px;margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid #22384a}
+ .sub{color:#666;font-size:12px;margin-bottom:20px}
+ table{border-collapse:collapse;width:100%;margin:6px 0 4px;font-size:12.5px}
+ th,td{border:1px solid #cfd8e0;padding:7px 9px;text-align:left;vertical-align:middle}
+ th{background:#eef3f7;font-weight:700;white-space:nowrap}
+ td.n{text-align:center;width:44px}
+ .mono{font-family:Consolas,monospace}
+ .b{font-weight:700}
+ .badge{display:inline-block;width:20px;height:20px;line-height:20px;border-radius:50%;
+        color:#fff;font-weight:700;text-align:center;font-size:11px}
+ .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle}
+ .kv{display:flex;flex-wrap:wrap;gap:0}
+ .kv div{width:25%;padding:9px 12px;border:1px solid #cfd8e0;margin:-1px 0 0 -1px}
+ .kv .k{display:block;color:#667;font-size:11px;margin-bottom:2px}
+ .kv .v{font-size:17px;font-weight:700;font-family:Consolas,monospace}
+ .map{margin:10px 0 6px;text-align:center}
+ .map img{max-width:100%;border:1px solid #22384a;border-radius:4px}
+ .cap{color:#666;font-size:11.5px;text-align:center;margin-top:6px}
+ ul.rec{margin:8px 0 0;padding-left:20px}
+ ul.rec li{margin-bottom:7px}
+ .foot{margin-top:28px;padding-top:12px;border-top:1px solid #dde4ea;color:#888;font-size:11px}
+ @media print{ body{padding:0} h2{page-break-after:avoid} .map{page-break-inside:avoid} }
+</style></head><body>
+
+<h1>인파 밀집 위험도 분석 보고서</h1>
+<div class="sub">${when} 생성 · 인파 밀집 시뮬레이션 시스템</div>
+
+<h2>1. 분석 조건</h2>
+<div class="kv">
+  <div><span class="k">행사장 면적</span><span class="v">${Math.round(site.area()).toLocaleString()}<small> ㎡</small></span></div>
+  <div><span class="k">투입 인원</span><span class="v">${((diag&&diag.pop)||sim.crowd.count||st.total||0).toLocaleString()}<small> 명</small></span></div>
+  <div><span class="k">출입구</span><span class="v">${site.gates.filter(g=>g.open).length}<small> / ${site.gates.length} 개소</small></span></div>
+  <div><span class="k">${diag?'예측 구간':'경과 시간'}</span><span class="v">${diag?fmtT(diag.evac.elapsed):fmtT(sim.time)}</span></div>
+  <div><span class="k">배치 인력</span><span class="v">${sim.police.units.length}<small> 명</small></span></div>
+  <div><span class="k">통제선</span><span class="v">${site.controlLines.length}<small> 개</small></span></div>
+  <div><span class="k">${diag?'분석 기준':'현재 상황'}</span><span class="v" style="font-size:15px">${diag?'대피 · 상시통행':(MODE_LABEL[sim.mode]||'-')}</span></div>
+  <div><span class="k">종합 위험지수</span><span class="v" style="color:${(diag?riskGrade(Math.max(diag.evac.peakRisk,diag.flow.peakRisk)):st.grade||{}).color||'#333'}">${diag?Math.round(Math.max(diag.evac.peakRisk,diag.flow.peakRisk)):st.risk.toFixed(0)}<small> ${diag?riskGrade(Math.max(diag.evac.peakRisk,diag.flow.peakRisk)).name:(st.grade?st.grade.name:'')}</small></span></div>
+</div>
+
+${diag?this._diagSection(diag):''}
+<h2>${diag?'3':'2'}. 누적 위험도 지도</h2>
+<div class="map">
+  ${img?`<img src="${img}" alt="누적 밀집도 지도">`:'<p style="color:#a00">지도 이미지를 생성하지 못했습니다.</p>'}
+  <div class="cap">${live
+    ? '아직 누적 이력이 없어 <b>현재 순간 밀집도</b>를 표시했습니다. ▶ 시작 으로 시뮬레이션을 돌리거나 ⚡ 현재 배치 진단 을 실행하면 전 구간 누적값으로 바뀝니다.'
+    : '시뮬레이션 전 구간에서 각 지점이 겪은 <b>최대 밀집도</b>를 색으로 표시. 번호는 위험 상위 지점이며, 아래 표와 대응합니다.'}</div>
+</div>
+
+<h2>${diag?'4':'3'}. 병목·위험 지점</h2>
+${spots.length?`<table>
+<tr><th>순위</th><th>위치 (m)</th><th>최대 밀집도<br>(명/㎡)</th><th>등급</th><th>발생 시각</th><th>위험밀도<br>지속</th><th>추정 원인</th></tr>
+${rows}
+</table>
+<div class="cap" style="text-align:left;margin-top:8px">
+※ 위치는 행사장 중심을 원점으로 한 좌표. 위험밀도 지속은 3명/㎡ 이상이 유지된 누적 시간입니다.
+</div>`:'<p>기록된 위험 지점이 없습니다. <b>▶ 시작</b> 으로 시뮬레이션을 돌리거나 <b>⚡ 현재 배치 진단</b> 을 실행한 뒤 다시 생성하세요.</p>'}
+
+<h2>${diag?'5':'4'}. 출입구별 통과 실적</h2>
+<table>
+<tr><th>출입구</th><th>폭</th><th>상태</th><th>통과 인원</th></tr>
+${gateRows}
+<tr style="background:#f7fafc"><td class="b">합계</td><td>—</td><td>—</td><td class="mono b">${totalPass.toLocaleString()}</td></tr>
+</table>
+${totalPass>0?`<div class="cap" style="text-align:left;margin-top:8px">
+※ 최다 «${maxG.name.replace(/\(.*\)/,'')}» ${maxG.count.toLocaleString()}명 · 최소 «${minG.name.replace(/\(.*\)/,'')}» ${minG.count.toLocaleString()}명 — 편차 ${imbalance.toFixed(1)}%
+</div>`:''}
+
+<h2>${diag?'6':'5'}. 분석 결과 및 권고</h2>
+<ul class="rec">${rec.map(r=>'<li>'+r+'</li>').join('')}</ul>
+
+<div class="foot">
+본 보고서는 Social Force Model·Boids·Dijkstra 경로장 기반 행위자 시뮬레이션 결과입니다.
+실제 인파 거동은 현장 여건에 따라 달라질 수 있으므로 안전관리 계획 수립의 참고자료로 활용하시기 바랍니다.
+</div>
+</body></html>`;
+  }
+
+  /** 사전 분석(예측) 절 */
+  _diagSection(d){
+    const g=(v)=> v>=6?'#ff1744': v>=4.5?'#ff5252': v>=3?'#ff9100': v>=1.5?'#e6b800':'#00a844';
+    const gn=(v)=> v>=6?'압사위험': v>=4.5?'위험': v>=3?'정체': v>=1.5?'혼잡':'원활';
+    const fT=(s)=> s==null?'—':(String((s/60|0)).padStart(2,'0')+':'+String(Math.round(s%60)).padStart(2,'0'));
+    const row=(nm,r)=>`
+      <tr><td class="b">${nm}</td>
+        <td class="mono b" style="color:${g(r.peakDensity)}">${r.peakDensity.toFixed(2)}</td>
+        <td>${gn(r.peakDensity)}</td>
+        <td class="mono">${r.peakRisk.toFixed(0)}</td>
+        <td class="mono">${r.avgSpeed.toFixed(2)}</td>
+        <td class="mono">${r.jamMax.toLocaleString()}</td>
+        <td class="mono">${r.scenario==='evac'?fT(r.t90):'—'}</td>
+        <td class="mono">${r.evacRate!=null?r.evacRate.toFixed(0)+'%':'—'}</td></tr>`;
+    const spots=d.evac.hotspots.map((h,i)=>`
+      <tr><td class="n">${i+1}</td><td class="mono">${Math.round(h.x)}, ${Math.round(h.y)}</td>
+      <td class="mono b" style="color:${g(h.peak)}">${h.peak.toFixed(2)}</td>
+      <td>${gn(h.peak)}</td><td class="mono">${h.dwell>=1?Math.round(h.dwell)+'초':'—'}</td></tr>`).join('');
+    const worst=Math.max(d.evac.peakDensity, d.flow.peakDensity);
+    return `
+<h2>2. 사전 분석 (예측)</h2>
+<p style="margin:4px 0 8px;color:#555;font-size:12px">
+시뮬레이션을 화면에 실행하지 않고 물리 계산만으로 예측한 결과입니다. 투입 인원 ${fmtNum(d.pop)}명 기준.</p>
+<table>
+<tr><th>상황</th><th>최대 밀집도<br>(명/㎡)</th><th>등급</th><th>최고<br>위험지수</th>
+<th>평균 속도<br>(m/s)</th><th>최대<br>정체인원</th><th>90% 대피</th><th>대피<br>완료율</th></tr>
+${row('대피 (긴급상황)', d.evac)}
+${row('상시 통행 (평상시)', d.flow)}
+</table>
+<div class="cap">※ 최대 밀집도는 전 구간에서 어느 한 지점이 겪은 최고값입니다.
+${worst>=6?'<b style="color:#c00"> 압사 위험 구간에 도달했습니다.</b>':
+  worst>=4.5?'<b style="color:#c00"> 위험 수준입니다.</b>':
+  worst>=3?' 보행이 어려운 정체가 예상됩니다.':' 위험 수준의 밀집은 예측되지 않았습니다.'}</div>
+${spots?`<div style="margin-top:12px"><b style="font-size:13px">대피 시 위험 지점 (예측)</b></div>
+<table><tr><th>순위</th><th>위치 (m)</th><th>최대 밀집도</th><th>등급</th><th>3명/㎡ 지속</th></tr>${spots}</table>`:''}
+`;
+  }
+
+  /** 배경지도 타일을 기다린 뒤 보고서를 만든다 */
+  buildAsync(diag){
+    return this.prefetchTiles(980,700)
+      .catch(()=>0)
+      .then(()=>this.build(diag));
+  }
+
+  /** 새 창으로 열기 (인쇄·PDF 저장 가능) */
+  open(){
+    const html=this.build();
+    const w=window.open('','_blank');
+    if(!w){ this.sim.ui.log('팝업이 차단되었습니다. 브라우저 팝업 허용 후 다시 시도하세요.'); return; }
+    w.document.write(html); w.document.close();
+    this.sim.ui.log('위험도 분석 보고서를 새 창에 열었습니다. (Ctrl+P 로 PDF 저장)');
+  }
+  /** HTML 파일로 저장 */
+  save(){
+    download('위험도분석보고서_'+Date.now()+'.html', this.build(), 'text/html;charset=utf-8');
+    this.sim.ui.log('위험도 분석 보고서를 저장했습니다.');
+  }
+}
+
+/* =========================================================
+ * 사전 분석 (Pre-Analysis)
+ *   화면에 그리지 않고 물리만 빠르게 돌려, 시작 버튼을 누르지 않고도
+ *   현재 배치의 위험도를 진단하고 개선안을 탐색한다.
+ *
+ *   대피 + 상시통행 두 상황을 각각 돌려 지표를 산출한다.
+ * ========================================================= */
+class PreAnalysis{
+  constructor(sim){
+    this.sim=sim;
+    this.running=false;
+    this.cancel=false;
+    /* 프레임당 계산에 쓸 시간(ms). 크면 빨리 끝나지만 화면이 뻑뻑해지고,
+       작으면 부드럽지만 오래 걸린다. 22ms ≈ 체감상 끊김 없는 수준. */
+    this.budgetMs=22;
+  }
+
+  /* ---------- 상태 저장/복원 ----------
+     분석은 현재 설정을 건드리므로, 끝난 뒤 원상 복구한다. */
+  _snapshot(){
+    const s=this.sim, site=s.site;
+    return {
+      gates: site.gates.map(g=>({id:g.id,width:g.width,open:g.open,count:g.count})),
+      pop: s.requestedPop,
+      mode: s.mode, time: s.time, paused: s.paused, speed: s.speedMul,
+      cong: s.congestionRouting,
+      units: s.police.units.length,
+      ratios: { police:PERSON_TYPES.police.ratio, staff:PERSON_TYPES.staff.ratio,
+                adult:PERSON_TYPES.adult.ratio }
+    };
+  }
+  _restore(snap){
+    const s=this.sim, site=s.site;
+    for(const g of site.gates){
+      const o=snap.gates.find(v=>v.id===g.id);
+      if(o){ g.width=o.width; g.open=o.open; g.count=o.count; }
+    }
+    PERSON_TYPES.police.ratio=snap.ratios.police;
+    PERSON_TYPES.staff.ratio =snap.ratios.staff;
+    PERSON_TYPES.adult.ratio =snap.ratios.adult;
+    s.congestionRouting=snap.cong;
+    s.rebuildWorld();
+    s.crowd.generate(snap.pop);
+    s.mode=snap.mode; s.time=snap.time; s.paused=true; s.speedMul=snap.speed;
+    s.stats.reset(); s.resetCharts(); s.heat.resetAccum();
+    s.ui.buildGateList(); s.ui.updateHud(); s.ui.updateMode();
+    s.ui.updateDeployInfo(); s.ui.updateReportInfo();
+  }
+
+  /* ---------- 한 시나리오를 시간분할로 돌린다 ----------
+     예전에는 수천 스텝을 한 번에 돌려 브라우저가 통째로 멈췄다.
+     이제 프레임당 budgetMs 만큼만 계산하고 제어권을 돌려주므로
+     화면이 계속 살아 있고(군중이 실제로 움직인다) 진행률도 표시된다. */
+  /**
+   * @param {object} cfg {pop, scenario:'evac'|'flow', units:{police,staff,mode}, maxSec}
+   * @param {function} onProgress (0~1, info) — 청크마다 호출
+   * @returns {Promise<object|null>} 지표 (취소 시 null)
+   */
+  _runAsync(cfg, onProgress){
+    const s=this.sim, DT=CONFIG.phys.dt;
+    const maxSteps=Math.round((cfg.maxSec||300)/DT);
+    let target=0;
+    let peakD=0, peakRisk=0, jamMax=0, sumV=0, nV=0;
+    let t50=null, t90=null, t99=null;
+    let statAcc=0, heatAcc=0, reAcc=0, congAcc=0;
+    let i=0, done=false, inited=false;
+
+    const yieldNext=(fn)=>{
+      /* 탭이 백그라운드면 rAF 가 멈추므로 setTimeout 으로 이어간다 */
+      if(document.hidden) setTimeout(fn,0);
+      else requestAnimationFrame(()=>fn());
+    };
+
+    /* 군중 생성·경로장 계산은 그 자체로 무거우므로 한 프레임을 통째로 쓴다.
+       (호출과 동시에 실행하면 진행률 표시가 그려지기 전에 화면이 멈춘다) */
+    const setup=()=>{
+      s.crowd.generate(cfg.pop);
+      if(cfg.units && (cfg.units.police||cfg.units.staff))
+        s.police.deploy(cfg.units.police||0, cfg.units.staff||0, cfg.units.mode||'gate');
+      s.heat.resetAccum();
+      s.stats.reset();
+      s.time=0;
+      if(cfg.scenario==='flow') s.events.fire('flow');
+      else                      s.events.fire('evac');
+      target=s.stats.evacTarget||s.crowd.count;
+    };
+
+    return new Promise((resolve,reject)=>{
+      const chunk=()=>{
+        if(this.cancel){ resolve(null); return; }
+        if(!inited){
+          inited=true;
+          try{ setup(); }catch(e){ reject(e); return; }
+          if(onProgress) onProgress(0,{scenario:cfg.scenario, simTime:0, target,
+                                       exited:0, maxD:0, risk:0});
+          yieldNext(chunk); return;
+        }
+        const t0=performance.now(), budget=this.budgetMs||22;
+        try{
+          while(i<maxSteps && !done){
+            s.time+=DT;
+            s.hash.build(s.people);
+            s.heat.computeLocal(s.people);
+            s.crowd.update(DT);
+            s.police.update(DT);
+            s.stats.update(DT);
+
+            reAcc+=DT;   if(reAcc>=1){ reAcc=0; s.crowd.reassignPartial(); }
+            if(cfg.scenario==='flow') s.crowd.updateFlow(DT);
+            congAcc+=DT;
+            if(congAcc>=1.5){ congAcc=0;
+              if(s.congestionRouting!==false) s.updateCongestionFields(); }
+
+            heatAcc+=DT;
+            if(heatAcc>=0.25){
+              s.heat.computeDisplay();
+              s.heat.accumulate(s.time, heatAcc);
+              heatAcc=0;
+            }
+            statAcc+=DT;
+            if(statAcc>=0.5){
+              statAcc=0;
+              s.stats.compute();
+              const c=s.stats.cur;
+              if(c.maxD>peakD)  peakD=c.maxD;
+              if(c.risk>peakRisk) peakRisk=c.risk;
+              if(c.jam>jamMax) jamMax=c.jam;
+              sumV+=c.avgSpeed; nV++;
+              if(cfg.scenario==='evac'){
+                const r=c.exited/Math.max(1,target)*100;
+                if(t50===null && r>=50) t50=s.time;
+                if(t90===null && r>=90) t90=s.time;
+                if(t99===null && r>=99){ t99=s.time; done=true; }
+              }
+            }
+            i++;
+            /* 매 스텝 시간예산 확인. 인원이 많으면 한 스텝만으로도 예산을
+               넘길 수 있으므로 4스텝 단위로 묶어 검사하면 프레임이 튄다.
+               (performance.now 비용은 한 스텝 비용에 비해 무시할 수준) */
+            if(performance.now()-t0>=budget) break;
+          }
+        }catch(e){ reject(e); return; }
+
+        if(onProgress){
+          const c=s.stats.cur;
+          onProgress(done?1:Math.min(1,i/maxSteps), {
+            scenario:cfg.scenario, simTime:s.time, target,
+            exited:c.exited, maxD:c.maxD, risk:c.risk
+          });
+        }
+        if(i>=maxSteps || done){ resolve(finish()); return; }
+        yieldNext(chunk);
+      };
+
+      const finish=()=>{
+        s.stats.compute();
+        return this._result(cfg, s.stats.cur, {peakD,peakRisk,jamMax,sumV,nV,t50,t90,t99,target});
+      };
+      yieldNext(chunk);
+    });
+  }
+
+  /** 시나리오 종료 후 지표 정리 */
+  _result(cfg, c, m){
+    const s=this.sim;
+    const {peakD,peakRisk,jamMax,sumV,nV,t50,t90,t99,target}=m;
+    // 누적 최대 밀집 (지점 기준)
+    let accPeak=0;
+    for(let i=0;i<s.heat.N;i++) if(s.heat.peak[i]>accPeak) accPeak=s.heat.peak[i];
+
+    return {
+      scenario:cfg.scenario,
+      peakDensity:accPeak,
+      peakInstant:peakD,
+      peakRisk, jamMax,
+      avgSpeed: nV? sumV/nV : 0,
+      evacRate: cfg.scenario==='evac' ? (c.exited/Math.max(1,target)*100) : null,
+      t50, t90, t99,
+      elapsed: s.time,
+      gates: s.site.gates.map(g=>({id:g.id, name:g.name, width:g.width, open:g.open, count:g.count})),
+      hotspots: s.heat.hotspots(s.site, 3).map(h=>({x:h.x,y:h.y,peak:h.peak,dwell:h.dwell})),
+      /* 보고서용 사본 — _restore() 가 곧바로 resetAccum() 을 하므로
+         분석이 끝난 뒤에는 sim.heat 에 아무것도 남지 않는다.
+         지도·병목표는 전적으로 이 사본을 써야 한다. */
+      peakMap : Float32Array.from(s.heat.peak),
+      dwellMap: Float32Array.from(s.heat.dwell),
+      peakTMap: Float32Array.from(s.heat.peakT)
+    };
+  }
+
+  /* ---------- 1) 현재 배치 진단 ----------
+     두 시나리오를 이어서 돌리되, 매 프레임 제어권을 브라우저에 돌려준다.
+     @param onProgress (0~1, info) — 전체 진행률 */
+  diagnose(pop, onDone, onProgress){
+    if(this.running) return;
+    this.running=true; this.cancel=false;
+    const snap=this._snapshot();
+    const s=this.sim;
+    s.paused=true;
+    s.ui.log('사전 분석 실행 중… 계산하는 동안에도 화면은 계속 움직입니다.');
+
+    // 시나리오 길이(330s : 180s) 비율로 전체 진행률을 나눈다
+    const W_EVAC=0.64, W_FLOW=0.36;
+    const step=(base,w)=>(f,info)=>{ if(onProgress) onProgress(base+f*w, info); };
+
+    const done=(res)=>{
+      this._restore(snap);
+      this.running=false; this.cancel=false;
+      if(res) this.last=res;
+      onDone && onDone(res);
+    };
+
+    this._runAsync({pop, scenario:'evac', maxSec:330}, step(0, W_EVAC))
+      .then(evac=>{
+        if(!evac) return null;                        // 취소됨
+        return this._runAsync({pop, scenario:'flow', maxSec:180}, step(W_EVAC, W_FLOW))
+          .then(flow=> flow ? {pop, evac, flow} : null);
+      })
+      .catch(e=>{
+        console.error(e);
+        s.ui.log('사전 분석 오류: '+((e&&e.message)||e));
+        return null;
+      })
+      .then(done);
+  }
+
+}
 class UIManager{
   constructor(sim){
     this.sim=sim;
@@ -4950,11 +5825,27 @@ class UIManager{
 
     /* --- 01 시뮬레이션 --- */
     const slider=$('popSlider');
-    const showPop=()=>{ $('popVal').textContent=fmtNum(CONFIG.popSteps[slider.value])+' 명'; };
-    slider.addEventListener('input',showPop); showPop();
+    /* 슬라이더를 옮기는 즉시 requestedPop 을 갱신한다.
+       사전분석·보고서가 이 값을 참조하므로, 예전처럼 '군중 생성'을
+       눌러야만 반영되면 바뀐 인원이 분석에 들어가지 않는다. */
+    this.syncPopButton=()=>{
+      const n=CONFIG.popSteps[slider.value];
+      $('popVal').textContent=fmtNum(n)+' 명';
+      const b=$('btnGenerate');
+      if(!b) return;
+      const stale = sim.crowd.count!==n;
+      b.textContent = stale ? '군중 생성 — '+fmtNum(n)+'명 적용' : '군중 생성';
+      b.classList.toggle('need', stale);
+    };
+    this.syncPop=()=>{
+      sim.requestedPop=CONFIG.popSteps[slider.value];
+      this.syncPopButton();
+    };
+    slider.addEventListener('input',this.syncPop); this.syncPop();
     $('btnGenerate').addEventListener('click',()=>{
       const n=CONFIG.popSteps[slider.value];
       sim.generate(n);
+      this.syncPopButton();
     });
     $('btnPlay').addEventListener('click',()=>sim.togglePlay());
     $('btnRestart').addEventListener('click',()=>sim.restart());
@@ -5026,6 +5917,7 @@ class UIManager{
       const b=e.target.closest('button'); if(!b) return;
       const r=parseInt(b.dataset.radius,10);
       sim.heat.setRadius(r); this.densRadius=r;
+      if(sim.paused) sim.heat.computeLocal(sim.people);
       sim.heat.computeDisplay();
       $('radiusRow').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
       $('hudLegend').querySelector('h4').textContent='밀집도 (명/㎡) · 반경 '+r+'m';
@@ -5117,7 +6009,7 @@ class UIManager{
     this.showDrawHelp=showDrawHelp;
 
     $('btnVenuePoly').addEventListener('click',()=>{
-      if(sim.map.kind!=='2d'){ this.log('구역 그리기는 2D 평면도에서만 가능합니다.'); return; }
+      if(sim.map.kind!=='2d'){ this.log('구역 그리기는 2D 평면도에서만 가능합니다. [지도 보기]에서 2D로 전환하세요.'); return; }
       if(sim.map.polyDraw){          // 다시 누르면 중단
         sim.map.cancelPolyDraw(); showDrawHelp(false); this.setClickHint(null); return;
       }
@@ -5137,7 +6029,7 @@ class UIManager{
     });
 
     $('btnVenueVertex').addEventListener('click',()=>{
-      if(sim.map.kind!=='2d'){ this.log('꼭짓점 편집은 2D 평면도에서만 가능합니다.'); return; }
+      if(sim.map.kind!=='2d'){ this.log('꼭짓점 편집은 2D 평면도에서만 가능합니다. [지도 보기]에서 2D로 전환하세요.'); return; }
       if(sim.map.polyEdit){ sim.map.cancelPolyEdit(); this.setClickHint(null);
         $('btnVenueVertex').classList.remove('on');
         const hh=$('venueHelp'); if(hh) hh.style.display='none';
@@ -5183,7 +6075,7 @@ class UIManager{
     });
 
     $('btnVenueDraw').addEventListener('click',()=>{
-      if(sim.map.kind!=='2d'){ this.log('사각형 지정은 2D 평면도에서만 가능합니다.'); return; }
+      if(sim.map.kind!=='2d'){ this.log('사각형 지정은 2D 평면도에서만 가능합니다. [지도 보기]에서 2D로 전환하세요.'); return; }
       if(sim.map.venueDraw){        // 다시 누르면 취소
         sim.map.cancelVenueDraw(); this.setClickHint(null);
         $('btnVenueDraw').classList.remove('on'); return;
@@ -5222,7 +6114,7 @@ class UIManager{
     this.stopLayoutEdits=stopEdits;
 
     $('btnStageDraw').addEventListener('click',()=>{
-      if(sim.map.kind!=='2d'){ this.log('무대 지정은 2D 평면도에서만 가능합니다.'); return; }
+      if(sim.map.kind!=='2d'){ this.log('무대 지정은 2D 평면도에서만 가능합니다. [지도 보기]에서 2D로 전환하세요.'); return; }
       if(sim.map.stageDraw){ stopEdits(); return; }      // 다시 누르면 취소
       stopEdits(); $('btnStageDraw').classList.add('on');
       this.setClickHint('무대 범위를 드래그해 지정하세요 (ESC 취소)');
@@ -5231,6 +6123,7 @@ class UIManager{
         stopEdits();
         if(!r.ok){ this.log(r.reason); return; }
         sim.stageChanged();
+        this.syncStageUI();
         this.log('무대 설정 — '+Math.round(CONFIG.stage.x1-CONFIG.stage.x0)+'m × '+
                  Math.round(CONFIG.stage.y1-CONFIG.stage.y0)+'m');
       });
@@ -5243,7 +6136,7 @@ class UIManager{
     };
     this.syncStageInputs=syncStageInputs;
     $('btnStageEdit').addEventListener('click',()=>{
-      if(sim.map.kind!=='2d'){ this.log('무대 편집은 2D 평면도에서만 가능합니다.'); return; }
+      if(sim.map.kind!=='2d'){ this.log('무대 편집은 2D 평면도에서만 가능합니다. [지도 보기]에서 2D로 전환하세요.'); return; }
       if(sim.map.stageEdit){ sim.map.cancelStageEdit(); this.setClickHint(null);
         $('btnStageEdit').classList.remove('on'); return; }
       if(this.stopLayoutEdits) this.stopLayoutEdits();
@@ -5283,13 +6176,26 @@ class UIManager{
         this.log('무대 '+Math.round(w)+'×'+Math.round(h)+'m · '+Math.round(r)+'° 적용.');
       });
     });
+    $('btnStageDelete').addEventListener('click',()=>{
+      if(!sim.site.hasStage()){
+        // 무대가 없으면 기본 위치로 되살린다 (토글처럼 동작)
+        $('btnStageReset').click();
+        return;
+      }
+      if(this.stopLayoutEdits) this.stopLayoutEdits();
+      sim.site.removeStage();
+      sim.stageChanged();
+      this.syncStageUI();
+      this.log('무대를 삭제했습니다. 공연·유명인 이벤트는 구역 중앙으로 대체됩니다.');
+    });
     $('btnStageReset').addEventListener('click',()=>{
       const T=SITE_TEMPLATE.stage, hw=sim.site.hw, hh=sim.site.hh;
       const B=sim.site.bbox, bcx=(B.x0+B.x1)/2, bcy=(B.y0+B.y1)/2;
       sim.site.setStageRect(bcx+(T.u0+T.u1)/2*hw, bcy+(T.v0+T.v1)/2*hh,
                             (T.u1-T.u0)*hw, (T.v1-T.v0)*hh, 0);
       sim.stageChanged();
-      this.log('무대를 기본 위치로 되돌렸습니다.');
+      this.syncStageUI();
+      this.log('무대를 기본 위치에 배치했습니다.');
     });
 
     const gateWidthInput=()=>{
@@ -5297,7 +6203,7 @@ class UIManager{
       return (isFinite(v)&&v>=2&&v<=60)?v:10;
     };
     $('btnGateAdd').addEventListener('click',()=>{
-      if(sim.map.kind!=='2d'){ this.log('출입구 편집은 2D 평면도에서만 가능합니다.'); return; }
+      if(sim.map.kind!=='2d'){ this.log('출입구 편집은 2D 평면도에서만 가능합니다. [지도 보기]에서 2D로 전환하세요.'); return; }
       // 같은 버튼을 다시 누르면 모드를 끈다
       if(sim.map.gateEdit && sim.map.gateEdit.mode==='add'){ stopEdits(); return; }
       stopEdits(); $('btnGateAdd').classList.add('on');
@@ -5313,7 +6219,7 @@ class UIManager{
       sim.map.gateEdit.width=gateWidthInput();
     });
     $('btnGateMove').addEventListener('click',()=>{
-      if(sim.map.kind!=='2d'){ this.log('출입구 편집은 2D 평면도에서만 가능합니다.'); return; }
+      if(sim.map.kind!=='2d'){ this.log('출입구 편집은 2D 평면도에서만 가능합니다. [지도 보기]에서 2D로 전환하세요.'); return; }
       // 같은 버튼을 다시 누르면 모드를 끈다
       if(sim.map.gateEdit && sim.map.gateEdit.mode==='move'){ stopEdits(); return; }
       stopEdits(); $('btnGateMove').classList.add('on');
@@ -5338,7 +6244,7 @@ class UIManager{
       sim.map.gateEdit.width=gateWidthInput();
     });
     $('btnGateRemove').addEventListener('click',()=>{
-      if(sim.map.kind!=='2d'){ this.log('출입구 편집은 2D 평면도에서만 가능합니다.'); return; }
+      if(sim.map.kind!=='2d'){ this.log('출입구 편집은 2D 평면도에서만 가능합니다. [지도 보기]에서 2D로 전환하세요.'); return; }
       // 같은 버튼을 다시 누르면 모드를 끈다
       if(sim.map.gateEdit && sim.map.gateEdit.mode==='remove'){ stopEdits(); return; }
       stopEdits(); $('btnGateRemove').classList.add('on');
@@ -5417,6 +6323,8 @@ class UIManager{
       if(np+ns>2000){ this.log('한 번에 2000명까지 배치할 수 있습니다.'); return; }
       sim.police.deploy(np,ns,$('selDeploy').value);
       this.updateDeployInfo();
+    this.updateReportInfo();
+    this.syncStageUI();
     });
     $('btnClearUnits').addEventListener('click',()=>{
       sim.police.clearUnits(); this.updateDeployInfo();
@@ -5443,6 +6351,44 @@ class UIManager{
     });
     $('chkHeat').addEventListener('change',e=>this.showHeat=e.target.checked);
     // 배경 지도 전환 (위성영상 / 일반지도 / 끄기)
+    /* --- 2D / 3D 전환 ---
+       렌더러 교체는 격자·좌표계 재구성이 필요해 페이지를 다시 여는 방식이 안전하다.
+       ?render= 파라미터로 모드를 넘긴다. */
+    const c3=check3D();
+    const cur=sim.map.kind;
+    $('btnView2D').classList.toggle('on', cur==='2d');
+    $('btnView3D').classList.toggle('on', cur==='3d');
+    const vi=$('viewInfo');
+    const setViewInfo=()=>{
+      if(!vi) return;
+      if(cur==='3d'){
+        vi.textContent='3D 지구본 — 실제 지형 위에 표시됩니다.';
+        vi.style.color='';
+      }else if(c3.ok){
+        vi.textContent='2D 평면도 · 3D 사용 가능';
+        vi.style.color='';
+      }else{
+        vi.textContent='2D 평면도 · 3D 불가 : '+c3.reason;
+        vi.style.color='#f5a524';
+      }
+    };
+    setViewInfo();
+
+    const switchView=(mode)=>{
+      if(mode===cur) return;
+      if(mode==='3d' && !c3.ok){
+        this.log('3D 를 쓸 수 없습니다 — '+c3.reason);
+        if(vi){ vi.textContent='3D 불가 : '+c3.reason; vi.style.color='#ff6b81'; }
+        return;
+      }
+      const u=new URL(location.href);
+      u.searchParams.set('render', mode);
+      this.log((mode==='3d'?'3D 지구본':'2D 평면도')+'으로 전환합니다…');
+      setTimeout(()=>{ location.href=u.toString(); }, 250);
+    };
+    $('btnView2D').addEventListener('click',()=>switchView('2d'));
+    $('btnView3D').addEventListener('click',()=>switchView('3d'));
+
     document.querySelectorAll('[data-base]').forEach(btn=>{
       btn.addEventListener('click',()=>{
         document.querySelectorAll('[data-base]').forEach(o=>o.classList.remove('on'));
@@ -5463,6 +6409,91 @@ class UIManager{
     $('chkTypeColor').addEventListener('change',e=>{ this.typeColor=e.target.checked; sim.forceColorRefresh(); });
 
     /* --- 08 데이터 --- */
+    /* --- 앱 내부 모달 --- */
+    this._modalHtml=''; this._modalName='보고서';
+    $('mbClose').addEventListener('click',()=>this.closeModal());
+    $('mbPrint').addEventListener('click',()=>{
+      const f=$('modalFrame');
+      try{ f.contentWindow.focus(); f.contentWindow.print(); }
+      catch(e){ this.log('인쇄를 시작할 수 없습니다.'); }
+    });
+    $('mbSave').addEventListener('click',()=>{
+      if(!this._modalHtml){ this.log('저장할 내용이 없습니다.'); return; }
+      download(this._modalName+'_'+Date.now()+'.html', this._modalHtml, 'text/html;charset=utf-8');
+      this.log('보고서를 저장했습니다.');
+    });
+    $('mbNew').addEventListener('click',()=>{
+      if(!this._modalHtml) return;
+      const w=window.open('','_blank');
+      if(!w){ this.log('팝업이 차단되었습니다.'); return; }
+      w.document.write(this._modalHtml); w.document.close();
+    });
+    $('modalWrap').addEventListener('mousedown',(e)=>{
+      if(e.target===$('modalWrap')) this.closeModal();     // 바깥 클릭으로 닫기
+    });
+
+    /* --- 사전 분석 --- */
+    $('btnPreDiag').addEventListener('click',()=>{
+      if(!sim.pre) sim.pre=new PreAnalysis(sim);
+      const btn=$('btnPreDiag');
+      // 실행 중이면 같은 버튼이 '중지' 로 동작한다
+      if(sim.pre.running){
+        sim.pre.cancel=true;
+        btn.textContent='중지하는 중…';
+        this.log('사전 분석을 중지합니다.');
+        return;
+      }
+      /* 슬라이더를 직접 읽는다 — '군중 생성' 을 누르지 않아도
+         지금 선택한 인원으로 분석되도록 한다. */
+      const pop=CONFIG.popSteps[$('popSlider').value];
+      sim.requestedPop=pop;
+      // 편집 모드가 켜져 있으면 끄고, 패널을 잠근다
+      sim.police.cancelModes();
+      if(sim.terrain.paintMode){ sim.terrain.stopPaint(); this.syncTerrainButtons(); }
+      this.setAnalyzing(true);
+      btn.textContent='■ 분석 중지';
+      btn.classList.remove('primary'); btn.classList.add('danger');
+      this.setPreProgress(0, {pop});
+      sim.pre.diagnose(pop,
+        (res)=>{
+          this.setAnalyzing(false);
+          btn.textContent='⚡ 현재 배치 진단';
+          btn.classList.remove('danger'); btn.classList.add('primary');
+          if(!res){
+            $('preInfo').innerHTML='분석을 중지했습니다. 배치를 바꾼 뒤 다시 실행하세요.';
+            return;
+          }
+          this.showDiagnose(res);
+        },
+        (frac,info)=>this.setPreProgress(frac, info)
+      );
+    });
+
+    /* --- 위험도 분석 보고서 --- */
+    $('btnReport').addEventListener('click',()=>{
+      if(!sim.report) sim.report=new RiskReport(sim);
+      // 새 창 대신 앱 안에서 연다
+      this.log('보고서를 만드는 중… (배경지도 타일 준비)');
+      sim.report.buildAsync().then(html=>{
+        this.showModal('위험도 분석 보고서', html, '위험도분석보고서');
+      });
+    });
+    $('btnReportSave').addEventListener('click',()=>{
+      if(!sim.report) sim.report=new RiskReport(sim);
+      sim.report.buildAsync().then(html=>{
+        download('위험도분석보고서_'+Date.now()+'.html', html, 'text/html;charset=utf-8');
+        this.log('위험도 분석 보고서를 저장했습니다.');
+      });
+    });
+    $('btnHeatReset').addEventListener('click',()=>{
+      sim.heat.resetAccum();
+      /* 초기화 직후 현재 밀집도가 그대로 다시 기록되지 않도록
+         표시 격자도 함께 비운다(다음 계산 주기에 새로 채워진다). */
+      sim.heat.disp.fill(0);
+      this.updateReportInfo();
+      this.log('위험 이력을 초기화했습니다. 이후 구간만 기록됩니다.');
+    });
+
     $('btnCSV').addEventListener('click',()=>{
       if(sim.stats.series.length===0){ this.log('저장할 통계가 없습니다. 시뮬레이션을 실행하세요.'); return; }
       download('crowd_sim_'+Date.now()+'.csv', sim.stats.toCSV(), 'text/csv;charset=utf-8');
@@ -5476,12 +6507,19 @@ class UIManager{
 
     /* --- 키보드 --- */
     window.addEventListener('keydown',(e)=>{
+      if(e.code==='Escape' && $('modalWrap').classList.contains('on')){
+        this.closeModal(); return;
+      }
       if(sim.map.polyDraw){
         if(e.code==='Backspace'){ e.preventDefault(); sim.map.undoPolyPoint(); return; }
         if(e.code==='Enter'){ sim.map.finishPolyDraw(); this.setClickHint(null);
           if(this.showDrawHelp) this.showDrawHelp(false); return; }
       }
-      if(e.code==='Space'){ e.preventDefault(); sim.togglePlay(); }
+      if(e.code==='Space'){
+        e.preventDefault();
+        if(sim.pre && sim.pre.running){ this.log('사전 분석 중에는 시뮬레이션을 조작할 수 없습니다.'); return; }
+        sim.togglePlay();
+      }
       if(e.code==='Escape'){
         sim.police.cancelModes();
         if(sim.terrain.paintMode){ sim.terrain.stopPaint(); this.syncTerrainButtons(); }
@@ -5551,6 +6589,7 @@ class UIManager{
   /* ---------- HUD ---------- */
   updateHud(){
     const sim=this.sim, site=sim.site;
+    if(this.syncPopButton) this.syncPopButton();
     const open=site.gates.filter(g=>g.open).length;
     $('hudLine2').textContent='인원 '+fmtNum(sim.crowd.count)+'명 · '+MODE_LABEL[sim.mode];
     $('hudLine3').textContent='출입구 폭 '+site.gates[0].width+'m · 개방 '+open+' / '+site.gates.length;
@@ -5561,7 +6600,9 @@ class UIManager{
     $('pillUnit').textContent='경찰/요원 '+sim.police.units.length;
   }
   updateMode(){
-    $('modeBadge').textContent=MODE_LABEL[this.sim.mode]||'대기';
+    const analyzing=this.sim.pre && this.sim.pre.running;
+    $('modeBadge').textContent=
+      (analyzing?'사전 분석 중 · ':'')+(MODE_LABEL[this.sim.mode]||'대기');
     this.updateHud();
   }
   log(msg){
@@ -5575,6 +6616,106 @@ class UIManager{
     el.textContent='현재 '+V.poly.length+'각형 · 면적 '+
       Math.round(V.area()).toLocaleString()+'㎡ · '+
       Math.round(V.hw*2)+'×'+Math.round(V.hh*2)+'m · 출입구 '+V.gates.length+'개';
+  }
+  /** 보고서 안내에 현재 기록 상태를 반영 */
+  /** 무대 유무에 따라 버튼·입력란 상태를 맞춘다 */
+  syncStageUI(){
+    const has=this.sim.site.hasStage();
+    const del=$('btnStageDelete');
+    if(del) del.textContent = has ? '무대 삭제' : '무대 만들기';
+    ['btnStageEdit','inStageW','inStageH','inStageR'].forEach(id=>{
+      const el=$(id); if(el) el.disabled=!has;
+    });
+    if(has && this.syncStageInputs) this.syncStageInputs();
+    else{
+      ['inStageW','inStageH','inStageR'].forEach(id=>{ const el=$(id); if(el) el.value='—'; });
+    }
+  }
+  /** 사전 분석 중 조작 잠금 */
+  setAnalyzing(on){
+    const side=$('side'), pane=$('mapPane');
+    if(side) side.classList.toggle('busy', !!on);
+    if(pane) pane.classList.toggle('busy', !!on);
+    this.updateMode();
+  }
+
+  /** 사전 분석 진행률 표시 */
+  setPreProgress(frac, info){
+    const el=$('preInfo'); if(!el) return;
+    const p=Math.round(clamp(frac,0,1)*100);
+    if(frac<=0 || !this._preT0) this._preT0=Date.now();
+    const el0=(Date.now()-this._preT0)/1000;
+    // 남은 시간 추정 — 5% 이상 진행돼야 의미가 있다
+    let eta='';
+    if(frac>0.05 && frac<1){
+      const rest=Math.round(el0*(1-frac)/frac);
+      eta=' · 남은 시간 약 '+(rest>=60?Math.round(rest/60)+'분':rest+'초');
+    }
+    let line;
+    if(!info || !info.scenario){
+      line='준비 중… <em>'+fmtNum((info&&info.pop)||0)+'명 생성</em>';
+    }else if(info.scenario==='evac'){
+      const r=Math.round(info.exited/Math.max(1,info.target)*100);
+      line='① 대피 시나리오 <em>· 모의 '+Math.round(info.simTime)+'초 · 대피 '+r+'%'+
+           ' · 최대 '+info.maxD.toFixed(2)+'명/㎡</em>';
+    }else{
+      line='② 상시 통행 <em>· 모의 '+Math.round(info.simTime)+'초 · 최대 '+
+           info.maxD.toFixed(2)+'명/㎡ · 위험 '+Math.round(info.risk)+'</em>';
+    }
+    el.innerHTML=
+      '<div class="progtxt"><b style="color:#22d3ee">'+line+'</b> &nbsp;'+p+'%</div>'+
+      '<div class="progbar"><i style="width:'+p+'%"></i></div>'+
+      '<div class="progtxt" style="margin-top:4px;color:#63788d">경과 '+
+        Math.round(el0)+'초'+eta+' · 버튼을 다시 누르면 중지합니다</div>';
+  }
+
+  /** 진단 완료 — 요약을 패널에 쓰고, 보고서를 앱 안에서 연다 */
+  showDiagnose(res){
+    const el=$('preInfo');
+    const e=res.evac, f=res.flow;
+    const g=(v)=> v>=6?'#ff1744': v>=4.5?'#ff5252': v>=3?'#ff9100': v>=1.5?'#ffea00':'#00c853';
+    const gn=(v)=> v>=6?'압사위험': v>=4.5?'위험': v>=3?'정체': v>=1.5?'혼잡':'원활';
+    el.innerHTML=
+      '<b>진단 완료</b> ('+fmtNum(res.pop)+'명)<br>'+
+      '· 대피 : <b style="color:'+g(e.peakDensity)+'">'+e.peakDensity.toFixed(2)+
+        '명/㎡ ('+gn(e.peakDensity)+')</b> · 90% 대피 '+
+        (e.t90?Math.round(e.t90)+'초':'미달성')+'<br>'+
+      '· 상시 : <b style="color:'+g(f.peakDensity)+'">'+f.peakDensity.toFixed(2)+
+        '명/㎡ ('+gn(f.peakDensity)+')</b> · 평균속도 '+f.avgSpeed.toFixed(2)+'m/s';
+    this.log('사전 분석 완료 — 보고서를 표시합니다.');
+
+    /* 진단 결과를 포함한 위험도 분석 보고서를 만들어 앱 안에서 연다.
+       (누적 위험도 지도는 진단 과정에서 기록된 이력을 그대로 사용) */
+    const sim=this.sim;
+    if(!sim.report) sim.report=new RiskReport(sim);
+    sim.report.buildAsync(res).then(html=>{
+      this.showModal('위험도 분석 보고서 — 사전 진단 결과', html, '위험도분석보고서');
+    });
+  }
+
+  /** 앱 안에서 HTML 보고서를 띄운다 (새 창 아님) */
+  showModal(title, html, name){
+    this._modalHtml=html;
+    this._modalName=name||'보고서';
+    $('modalTitle').textContent=title;
+    const f=$('modalFrame');
+    f.srcdoc=html;
+    $('modalWrap').classList.add('on');
+  }
+  closeModal(){
+    $('modalWrap').classList.remove('on');
+    const f=$('modalFrame');
+    if(f) f.srcdoc='';
+  }
+  updateReportInfo(){
+    const el=$('reportInfo'); if(!el) return;
+    const h=this.sim.heat;
+    let mx=0, n=0;
+    for(let i=0;i<h.N;i++){ if(h.peak[i]>mx) mx=h.peak[i]; if(h.peak[i]>=3) n++; }
+    el.innerHTML='시뮬레이션 전 구간의 <b>누적 최대 밀집도</b>를 지도로 그리고, '+
+      '병목 지점과 원인을 표로 정리합니다. 새 창에서 <b>Ctrl+P</b> 로 PDF 저장할 수 있습니다.'+
+      (mx>0 ? '<br><b style="color:#22d3ee">현재 기록 — 최대 '+mx.toFixed(2)+
+              '명/㎡ · 위험구간 '+n+'칸</b>' : '<br>아직 기록된 위험 이력이 없습니다.');
   }
   updateDeployInfo(){
     const el=$('deployInfo'); if(!el) return;
@@ -5661,6 +6802,7 @@ class UIManager{
   }
   /* ---------- 통계 패널 ---------- */
   updateStats(){
+    if((this._rpTick=(this._rpTick||0)+1)%12===0) this.updateReportInfo();
     const sim=this.sim, c=sim.stats.cur;
     $('stPop').textContent=fmtNum(c.active);
     $('stSpeed').innerHTML=c.avgSpeed.toFixed(2)+'<small>m/s</small>';
@@ -5846,29 +6988,40 @@ class Simulation{
        축정렬 사각형을 쓰면 회전 시 영역이 커져 경로장이 무의미해진다. */
     let cells = CONFIG.stageFrontPoly
       ? pf.cellsInPolygon(CONFIG.stageFrontPoly)
-      : pf.cellsInRect(F.x0,F.y0,F.x1,F.y1);
+      : (F ? pf.cellsInRect(F.x0,F.y0,F.x1,F.y1) : []);
     if(cells.length===0){
       const c=this.site.centroid();
       cells=pf.cellsInRect(c.x-40,c.y-40,c.x+40,c.y+40);
     }
     pf.computeField('stage',cells);
-    /* 유명인 등장 지점 — 무대 위 한가운데.
-       무대 자체는 통행불가라 그 안의 셀은 목표가 될 수 없다.
-       따라서 '무대를 감싸는 띠' 중 통행 가능한 셀을 목표로 삼는다.
-       군중은 무대 가장자리(주로 정면)로 최대한 밀착하게 된다. */
+    /* 유명인 등장 지점 — 무대 정면.
+       예전에는 무대를 사방으로 감싸는 '띠' 전체를 목표로 삼았는데,
+       그러면 무대 옆·뒤로 돌아가는 것도 정당한 최단경로가 되어
+       정면이 막히는 순간 군중이 무대 측면으로 우르르 돌아간다.
+       실제로는 유명인이 보이는 '정면'에만 몰리므로 정면 띠만 목표로 한다. */
     let cc=[];
     const St=site.stage;
     if(St){
-      const pad=Math.max(2.5, pf.cs*1.6);
+      const pad=Math.max(3, pf.cs*2.2);
       const c2=Math.cos(St.rot), s2=Math.sin(St.rot);
-      const hx=St.w/2+pad, hy=St.h/2+pad;
-      const ring=[[-hx,-hy],[hx,-hy],[hx,hy],[-hx,hy]].map(([x,y])=>({
+      const hx=St.w/2+Math.max(2, pf.cs);      // 폭은 무대보다 살짝 넓게
+      const y0=-(St.h/2+pad), y1=-(St.h/2);    // 로컬 -y 가 정면
+      const front=[[-hx,y0],[hx,y0],[hx,y1],[-hx,y1]].map(([x,y])=>({
         x:St.cx+x*c2-y*s2, y:St.cy+x*s2+y*c2 }));
-      cc=pf.cellsInPolygon(ring);          // 무대 외곽 띠 중 열린 셀만 반환된다
+      cc=pf.cellsInPolygon(front);             // 열린 셀만 반환된다
     }
-    if(cc.length===0) cc=pf.cellsInRect(C.x-C.r,C.y-C.r,C.x+C.r,C.y+C.r);
+    if(cc.length===0 && C) cc=pf.cellsInRect(C.x-C.r,C.y-C.r,C.x+C.r,C.y+C.r);
+    if(cc.length===0){
+      // 무대가 없으면 구역 중앙을 유명인 등장 지점으로 삼는다
+      const ctr=site.centroid(), r=Math.max(10,Math.min(site.hw,site.hh)*0.14);
+      cc=pf.cellsInRect(ctr.x-r,ctr.y-r,ctr.x+r,ctr.y+r);
+    }
     if(cc.length===0) cc=cells;
-    pf.computeField('celeb',cc);
+    /* 유명인 몰림은 '혼잡 우회' 대상이 아니다.
+       비용장을 그대로 쓰면 정면이 붐비는 순간 우회 비용이 더 싸져
+       군중이 무대를 크게 돌아 옆으로 흘러간다(실제와 반대).
+       정면이 막혀도 밀고 들어가는 것이 이 이벤트의 재현 대상이다. */
+    pf.computeField('celeb',cc,{noCong:true});
     // 출입구별 (개방된 곳만)
     for(const g of site.gates){
       const name='gate:'+g.id;
@@ -5893,10 +7046,16 @@ class Simulation{
 
   generate(n){
     this.requestedPop=n;
+    this.heat.resetAccum();          // 위험 이력 초기화
     this.crowd.generate(n);
+    /* 생성 즉시 히트맵이 보이도록 격자를 채운다 (정지 상태이므로 tick 이 안 돈다) */
+    this.hash.build(this.people);
+    this.heat.computeLocal(this.people);
+    this.heat.computeDisplay();
     this.mode=MODE.IDLE; this.time=0; this.acc=0;
     this.stats.reset(); this.resetCharts();
     this.ui.updateMix(); this.ui.updateHud(); this.ui.updateMode();
+    this.ui.updateReportInfo();
     this.ui.log(fmtNum(n)+'명을 생성했습니다.');
   }
 
@@ -5982,7 +7141,18 @@ class Simulation{
     const t2=performance.now();
 
     this.heatRt+=dtReal;
-    if(this.heatRt>=0.1){ this.heatRt=0; this.heat.computeDisplay(); }
+    if(this.heatRt>=0.1){
+      const dt2=this.heatRt; this.heatRt=0;
+      /* 정지 중에는 tick() 이 돌지 않아 heat.count 가 비어 있다.
+         그러면 군중을 생성해도 ▶시작 을 누르기 전까지 히트맵이 보이지 않는다.
+         정지 상태에서도 격자를 한 번씩 채워준다(저비용).
+         단, 사전 분석 중에는 분석 루프가 직접 갱신하므로 중복 계산을 피한다. */
+      const analyzing = this.pre && this.pre.running;
+      if(this.paused && !analyzing) this.heat.computeLocal(this.people);
+      if(!analyzing) this.heat.computeDisplay();
+      // 정지 중이 아니면 위험 이력을 누적한다 (보고서용)
+      if(!this.paused) this.heat.accumulate(this.time, dt2*this.speedMul);
+    }
     this.heat.render(this.map,{ show:this.ui.showHeat, blur:this.ui.blur });
     const t3=performance.now();
 
@@ -5994,8 +7164,8 @@ class Simulation{
     this.uiRt+=dtReal;
     if(this.uiRt>=0.4){
       this.uiRt=0;
-      if(this.paused) this.stats.compute();
-      this.ui.updateStats();
+      if(this.paused && !(this.pre && this.pre.running)) this.stats.compute();
+      this.ui.updateStats();   // 분석 중에도 지표가 실시간으로 흐른다
     }
     this.chartRt+=dtReal;
     if(this.chartRt>=1.0){
@@ -6187,6 +7357,23 @@ class Simulation{
 /* =========================================================
  * 13. 부팅 — 실행 환경에 맞는 렌더러를 자동 선택
  * ========================================================= */
+/** 3D(Cesium) 를 쓸 수 있는 환경인지 검사한다.
+ *  {ok:boolean, reason:string} 을 돌려준다. */
+function check3D(){
+  /* file:// 이 가장 흔한 제약이므로 먼저 안내한다.
+     (이 경우 Cesium 이 로드되어도 Web Worker 가 차단되어 지구본이 뜨지 않는다) */
+  if(location.protocol!=='http:' && location.protocol!=='https:')
+    return {ok:false, reason:'파일을 직접 열면 3D 를 쓸 수 없습니다 — 서버실행.bat 으로 여세요'};
+  if(typeof Cesium==='undefined')
+    return {ok:false, reason:'Cesium 스크립트를 불러오지 못했습니다 (인터넷 연결 확인)'};
+  try{
+    const c=document.createElement('canvas');
+    if(!(c.getContext('webgl2')||c.getContext('webgl')))
+      return {ok:false, reason:'이 브라우저에서 WebGL 을 쓸 수 없습니다 (하드웨어 가속 확인)'};
+  }catch(e){ return {ok:false, reason:'WebGL 확인 실패'}; }
+  return {ok:true, reason:''};
+}
+
 function pickRenderer(site){
   const q=new URLSearchParams(location.search);
   const forced=q.get('render');                 // ?render=2d | 3d
@@ -6198,23 +7385,15 @@ function pickRenderer(site){
         지구본 타일 생성이 불가능하다 (브라우저 보안 정책)
      3) WebGL 사용 가능
      하나라도 안 되면 Canvas 2D 평면도로 자동 전환한다. */
-  const hasCesium = (typeof Cesium!=='undefined');
-  const httpOK    = (location.protocol==='http:'||location.protocol==='https:');
-  let webglOK=false;
-  try{
-    const c=document.createElement('canvas');
-    webglOK=!!(c.getContext('webgl2')||c.getContext('webgl'));
-  }catch(e){}
-
-  if(forced==='3d' || (hasCesium && httpOK && webglOK)){
+  const c3=check3D();
+  /* 기본은 2D. 3D 는 사용자가 명시적으로 고를 때만 쓴다.
+     (2D 가 어느 환경에서나 확실히 동작하고 성능도 낫다) */
+  if(forced==='3d' && c3.ok){
     try{ return new RendererCesium(site); }
     catch(e){ console.warn('Cesium 렌더러 생성 실패 — 2D 로 전환:',e); }
   }
-  const why = !httpOK ? 'file:// 실행'
-            : !hasCesium ? 'Cesium 로드 실패'
-            : !webglOK ? 'WebGL 불가' : '';
   const r=new Renderer2D(site);
-  r.fallbackReason=why;
+  if(forced==='3d' && !c3.ok) r.fallbackReason=c3.reason;
   return r;
 }
 
