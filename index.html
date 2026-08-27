@@ -2,241 +2,1887 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>경비 통합 플랫폼 | 울산경찰청</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>경비요도 제작</title>
 <style>
   :root{
-    --police-navy:#0b2c5e;
-    --police-navy-dark:#071f42;
-    --police-blue:#1a5fb4;
-    --police-blue-light:#e8f0fb;
-    --accent:#c8102e;
-    --gold:#b8912f;
-    --bg:#f4f6fa;
-    --surface:#ffffff;
-    --line:#dbe1ec;
-    --text:#1b2333;
-    --text-sub:#5b6577;
-    --ok:#1f8a4c;
-    --warn:#c77700;
-    --radius:10px;
-    --shadow:0 1px 2px rgba(11,44,94,.06), 0 6px 20px rgba(11,44,94,.07);
+    --bg:#0E1420; --panel:#16202F; --panel2:#1C2940; --line:#26354E;
+    --text:#DFE7F3; --sub:#8FA0B8; --blue:#3B7BFF; --yellow:#FFD023;
+    --red:#FF5A5F; --green:#37D3A0;
+    --mono:'SF Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
   }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
   body{
-    font-family:'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
+    height:100vh;height:100dvh;
+    font-family:Pretendard,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+    background:var(--bg);color:var(--text);
+    display:flex;flex-direction:column;
+    -webkit-user-select:none;user-select:none;
+    touch-action:none;
   }
-  a{color:inherit;text-decoration:none;}
-  .wrap{max-width:1200px;margin:0 auto;padding:0 24px;}
 
-  /* ── 상단 유틸바 ── */
-  .utilbar{background:var(--police-navy-dark);color:#c9d6ea;font-size:13px;}
-  .utilbar .wrap{display:flex;justify-content:space-between;align-items:center;height:36px;gap:16px;}
-  .utilbar .links{display:flex;gap:18px;}
-  .utilbar .links a:hover{color:#fff;text-decoration:underline;}
-  .clock{font-variant-numeric:tabular-nums;letter-spacing:.3px;color:#fff;font-weight:500;}
-
-  /* ── 헤더 ── */
-  header{background:var(--police-navy);color:#fff;}
-  header .wrap{display:flex;align-items:center;justify-content:space-between;height:88px;gap:24px;}
-  .brand{display:flex;align-items:center;gap:14px;}
-  .emblem{height:52px;flex:none;display:block;}
-  .emblem img{height:100%;width:auto;display:block;}
-  .brand h1{font-size:20px;font-weight:900;margin:0;letter-spacing:-.5px;}
-
-  /* ── 히어로 ── */
-  .hero{padding:52px 0 8px;}
-  .hero h2{font-size:29px;font-weight:900;margin:0 0 8px;letter-spacing:-1px;}
-  .hero h2 .hl{color:var(--police-blue);}
-  .hero p{margin:0;color:var(--text-sub);font-size:15.5px;}
-
-  /* ── 기능 카드 ── */
-  .cards{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:20px;
-    padding:28px 0 56px;
+  /* ── 헤더 ─────────────────────────── */
+  header{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);
+    flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
   }
-  .card{
-    position:relative;display:flex;flex-direction:column;
-    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-    padding:28px 26px 24px;box-shadow:var(--shadow);
-    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-    overflow:hidden;
-  }
-  .card::before{
-    content:"";position:absolute;left:0;top:0;width:100%;height:4px;
-    background:var(--police-blue);opacity:.85;
-  }
-  .card:nth-child(2)::before{background:var(--accent);}
-  .card:nth-child(3)::before{background:var(--gold);}
-  .card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(11,44,94,.14);border-color:#c3cfe2;}
-  .card:focus-visible{outline:3px solid var(--police-blue);outline-offset:2px;}
-  .card .icon{
-    width:52px;height:52px;border-radius:12px;display:grid;place-items:center;margin-bottom:18px;
-    background:var(--police-blue-light);
-  }
-  .card:nth-child(2) .icon{background:#fdeaed;}
-  .card:nth-child(3) .icon{background:#faf3e0;}
-  .card .icon svg{width:27px;height:27px;stroke:var(--police-blue);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-  .card:nth-child(2) .icon svg{stroke:var(--accent);}
-  .card:nth-child(3) .icon svg{stroke:var(--gold);}
-  .card h3{margin:0 0 8px;font-size:19px;font-weight:700;letter-spacing:-.4px;}
-  .card .desc{margin:0 0 18px;color:var(--text-sub);font-size:14.5px;flex:1;}
-  .card ul{margin:0 0 20px;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px;}
-  .card ul li{
-    font-size:12.5px;color:var(--text-sub);background:#f2f5fa;
-    border:1px solid #e3e9f2;border-radius:100px;padding:3px 10px;
-  }
-  .card .go{
-    display:inline-flex;align-items:center;gap:6px;
-    font-size:14.5px;font-weight:700;color:var(--police-navy);
-  }
-  .card .go svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.2;transition:transform .18s;}
-  .card:hover .go svg{transform:translateX(4px);}
+  header::-webkit-scrollbar{display:none}
+  .brand{display:flex;align-items:center;gap:8px;margin-right:6px;flex:none}
   .badge{
-    position:absolute;top:20px;right:20px;font-size:11.5px;font-weight:700;
-    padding:3px 9px;border-radius:100px;letter-spacing:.2px;
+    width:26px;height:26px;border-radius:6px;flex:none;
+    background:repeating-linear-gradient(135deg,var(--yellow) 0 6px,#111 6px 12px);
+    border:1px solid #000;
   }
-  .badge.live{background:#e6f4ec;color:var(--ok);}
+  .brand b{font-size:14px;letter-spacing:.06em;white-space:nowrap}
+  .brand small{display:block;font-size:10px;color:var(--sub);letter-spacing:.14em}
+  .hbtn{
+    flex:none;border:1px solid var(--line);background:var(--panel2);color:var(--text);
+    border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;white-space:nowrap;
+  }
+  .hbtn:active{transform:translateY(1px)}
+  .hbtn.warn{color:var(--red);border-color:#5a2a30}
+  .hbtn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .hbtn:disabled{opacity:.35;cursor:default}
+  .seg{display:flex;flex:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;background:transparent;color:var(--sub);padding:7px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .seg button.on{background:var(--blue);color:#fff;font-weight:600}
+  .hproj{
+    flex:none;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:7px 10px;font-size:12px;width:132px;
+  }
+  .hproj::placeholder{color:var(--sub)}
+  input,textarea,select{-webkit-user-select:text;user-select:text}
 
-  /* ── 푸터 ── */
-  footer{background:var(--police-navy-dark);color:#9fb3d1;padding:30px 0;font-size:13.5px;}
-  .footer-grid{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap;}
-  footer strong{color:#fff;font-weight:700;}
-  .dev-box{
-    background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-    border-radius:8px;padding:14px 18px;min-width:260px;
+  /* 크기·두께 조절 */
+  .sizectl{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    font-size:10px;color:var(--sub);flex:none;padding:6px 0;
   }
-  .dev-box .k{color:#7f97ba;font-size:12.5px;letter-spacing:.3px;margin-bottom:4px;}
-  .dev-box .v{color:#fff;font-size:14.5px;font-weight:500;}
-  .dev-box .v a{color:#ffd469;}
-  .dev-box .v a:hover{text-decoration:underline;}
-  .footer-note{margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);font-size:12.5px;color:#7f97ba;}
+  .sizectl input[type=range]{width:66px;accent-color:var(--yellow)}
+  #sizeVal,#geoAlphaVal{font-family:var(--mono);color:var(--text);font-size:11px}
 
-  @media (max-width:960px){
-    .cards{grid-template-columns:1fr;}
-    header .wrap{height:74px;}
+  /* ── 본문 ─────────────────────────── */
+  #main{flex:1;display:flex;min-height:0;position:relative}
+  #stage{flex:1;position:relative;min-width:0}
+  canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;background:#1B222D}
+
+  /* ── 도구 레일 ─────────────────────── */
+  #tools{
+    display:flex;flex-direction:column;gap:6px;padding:10px 8px;
+    background:var(--panel);border-right:1px solid var(--line);
+    overflow-y:auto;width:86px;flex:none;scrollbar-width:none;
   }
-  @media (max-width:600px){
-    .wrap{padding:0 16px;}
-    .hero h2{font-size:23px;}
-    .utilbar .links{display:none;}
+  #tools::-webkit-scrollbar{display:none}
+  .tool{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    border:1px solid var(--line);background:var(--panel2);color:var(--text);
+    border-radius:10px;padding:8px 4px;font-size:11px;cursor:pointer;flex:none;
+  }
+  .tool .ic{font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
+  .tool .ic svg{display:block}
+  .tool.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .tdiv{height:1px;background:var(--line);margin:4px 2px;flex:none}
+  .palette{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:2px 0;flex:none}
+  .sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .sw.on{border-color:#fff}
+
+  /* ── 상태 카드 ─────────────────────── */
+  #status{
+    position:absolute;right:10px;top:10px;z-index:5;
+    background:rgba(14,20,32,.88);backdrop-filter:blur(4px);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--sub);
+    pointer-events:none;min-width:150px;
+  }
+  #status b{color:var(--text);font-weight:600}
+  #status .yl{color:var(--yellow)} #status .bl{color:var(--blue)} #status .rd{color:var(--red)}
+
+  /* 플로팅 버튼/배너 */
+  #finishBar,#selBar{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:16px;z-index:6;
+    display:none;gap:8px;
+  }
+  #finishBar button,#selBar button{
+    border:0;border-radius:20px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+  #finishDone{background:var(--yellow);color:#111}
+  #finishCancel{background:var(--panel2);color:var(--text);border:1px solid var(--line)!important}
+  #selDelete{background:var(--red);color:#fff}
+  #selRename{background:var(--panel2);color:var(--text);border:1px solid var(--line)!important}
+  #banner{
+    position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;display:none;
+    background:#1c2f48;border:1px solid #3b7bff;color:#dfe7f3;border-radius:8px;
+    padding:9px 16px;font-size:12px;max-width:90%;text-align:center;box-shadow:0 6px 18px rgba(0,0,0,.5);
+  }
+  #hint{
+    position:absolute;left:10px;bottom:10px;z-index:5;pointer-events:none;
+    font-size:11px;color:var(--sub);background:rgba(14,20,32,.75);
+    border:1px solid var(--line);border-radius:8px;padding:6px 10px;max-width:60%;
+  }
+
+  /* 텍스트 입력창 */
+  #txtBox{position:absolute;z-index:8;display:none}
+  #txtBox textarea{
+    display:block;margin:0;padding:2px 4px;
+    background:transparent;border:0;outline:none;resize:none;overflow:hidden;
+    font-family:inherit;font-weight:bold;line-height:1.25;
+    min-width:24px;white-space:pre;border-radius:4px;
+    box-shadow:0 0 0 1.5px rgba(55,211,160,.9);
+  }
+
+  /* ── 모바일 ────────────────────────── */
+  @media (max-width:720px), (pointer:coarse) and (max-width:1024px){
+    header{padding:8px max(12px,env(safe-area-inset-left)) 8px max(12px,env(safe-area-inset-right))}
+    .hbtn,.seg button{padding:10px 12px;font-size:13px}
+    #main{flex-direction:column}
+    #tools{
+      order:2;width:100%;height:auto;
+      border-right:0;border-top:1px solid var(--line);
+      display:grid;grid-template-rows:repeat(2, auto);grid-auto-flow:column;grid-auto-columns:min-content;
+      align-items:stretch;
+      overflow-x:auto;overflow-y:hidden;
+      padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    }
+    .tool{min-width:64px;padding:10px 6px;font-size:12px}
+    .tool .ic{font-size:21px}
+    .tdiv{width:1px;height:auto;grid-row:span 2;align-self:stretch;margin:2px 4px}
+    .palette{grid-row:span 2;align-self:center;flex-wrap:wrap;align-content:center;gap:6px;max-width:64px}
+    .sw{width:26px;height:26px}
+    .sizectl{grid-row:span 2;align-self:stretch;justify-content:center;flex-direction:column;gap:4px;padding:0 6px;white-space:nowrap}
+    .sizectl input[type=range]{width:70px}
+    #tools::after{
+      content:'';grid-row:span 2;position:sticky;right:0;width:18px;align-self:stretch;
+      background:linear-gradient(to right, transparent, rgba(22,32,47,.92));
+      pointer-events:none;
+    }
+    .hproj{width:120px;padding:10px}
+    #status{right:8px;top:8px;padding:7px 9px;line-height:1.7;font-size:10px;min-width:0}
+    #hint{display:block;max-width:none;left:8px;right:8px;bottom:8px;text-align:center;font-size:11px}
+    #finishBar,#selBar{bottom:44px}
+    #finishBar button,#selBar button{padding:12px 18px;font-size:14px}
+    .brand small{display:none}
   }
 </style>
 </head>
 <body>
 
-<!-- 상단 유틸바 -->
-<div class="utilbar">
-  <div class="wrap">
-    <div class="links">
-      <a href="#">경찰청 포털</a>
-      <a href="#">사용 매뉴얼</a>
-      <a href="#">시스템 문의</a>
-    </div>
-    <div class="clock" id="clock">—</div>
-  </div>
-</div>
-
-<!-- 헤더 -->
 <header>
-  <div class="wrap">
-    <div class="brand">
-      <div class="emblem"><img src="data:image/png;base64,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" alt="경찰 로고"></div>
-      <div>
-        <h1>경비 통합 플랫폼</h1>
-      </div>
-    </div>
+  <div class="brand">
+    <div class="badge"></div>
+    <div><b>경비요도 제작</b><small>SECURITY DEPLOYMENT MAP</small></div>
   </div>
+  <input id="projName" class="hproj" placeholder="프로젝트명 입력" maxlength="40">
+  <div class="seg">
+    <button id="modeMap" class="on">지도</button>
+    <button id="modePhoto">사진</button>
+  </div>
+  <div class="seg" id="layerSeg">
+    <button id="layerOsm" class="on">일반</button>
+    <button id="layerSat">위성</button>
+  </div>
+  <button class="hbtn" id="btnPhoto">📁 GeoTIFF/사진 열기</button>
+  <button class="hbtn warn" id="btnGeoClear" style="display:none">GeoTIFF 제거</button>
+  <button class="hbtn" id="btnUndo">↩ 실행취소</button>
+  <button class="hbtn" id="btnRedo">↪</button>
+  <button class="hbtn primary" id="btnPng">PNG 저장</button>
+  <button class="hbtn" id="btnJson">계획 저장</button>
+  <button class="hbtn" id="btnOpen">계획 열기</button>
+  <button class="hbtn warn" id="btnClear">전체 삭제</button>
+  <input type="file" id="fileImg" accept="image/*,.tif,.tiff" hidden>
+  <input type="file" id="fileJson" accept=".json,application/json" hidden>
 </header>
 
-<div class="wrap">
+<div id="main">
+  <div id="tools">
+    <button class="tool on" data-tool="pan"><span class="ic">✋</span>이동·확대</button>
+    <button class="tool" data-tool="select"><span class="ic">🖱️</span>선택</button>
+    <div class="tdiv"></div>
+    <button class="tool" data-tool="officer"><span class="ic">
+      <svg viewBox="0 0 32 32" width="22" height="22">
+        <circle cx="16" cy="16" r="14" fill="#EEF1F5" stroke="#20242c" stroke-width="1.6"/>
+        <clipPath id="clipGen"><circle cx="16" cy="16" r="14"/></clipPath>
+        <g clip-path="url(#clipGen)">
+          <polygon points="4,32 10,19 22,19 28,32" fill="#0054A6"/>
+          <polygon points="16,19.5 14,23 18,23" fill="#1B2A41"/>
+          <circle cx="16" cy="14" r="4.4" fill="#E8B98D"/>
+          <path d="M11 12 A5 5 0 0 1 21 12 Z" fill="#1B2A41"/>
+          <ellipse cx="16" cy="12.6" rx="5.2" ry="1.4" fill="#1B2A41"/>
+          <circle cx="16" cy="11.3" r="0.9" fill="#F0B429"/>
+        </g>
+      </svg>
+    </span>일반경찰</button>
+    <button class="tool" data-tool="traffic"><span class="ic">
+      <svg viewBox="0 0 32 32" width="22" height="22">
+        <circle cx="16" cy="16" r="14" fill="#EEF1F5" stroke="#20242c" stroke-width="1.6"/>
+        <clipPath id="clipTraf"><circle cx="16" cy="16" r="14"/></clipPath>
+        <g clip-path="url(#clipTraf)">
+          <polygon points="4,32 10,19 22,19 28,32" fill="#FFFFFF" stroke="#0054A6" stroke-width="1.2"/>
+          <polygon points="16,19.5 14,23 18,23" fill="#1B2A41"/>
+          <circle cx="16" cy="14" r="4.4" fill="#E8B98D"/>
+          <path d="M11 12 A5 5 0 0 1 21 12 Z" fill="#1B2A41"/>
+          <ellipse cx="16" cy="12.6" rx="5.2" ry="1.4" fill="#1B2A41"/>
+          <circle cx="16" cy="11.3" r="0.9" fill="#F0B429"/>
+        </g>
+      </svg>
+    </span>교통경찰</button>
+    <button class="tool" data-tool="squad"><span class="ic">🛡️</span>부대</button>
+    <div class="tdiv"></div>
+    <button class="tool" data-tool="policeline"><span class="ic">🚧</span>질서유지선</button>
+    <button class="tool" data-tool="bus"><span class="ic">🚌</span>경찰버스</button>
+    <div class="tdiv"></div>
+    <button class="tool" data-tool="arrow"><span class="ic">➡️</span>동선</button>
+    <button class="tool" data-tool="pen"><span class="ic">／</span>직선</button>
+    <button class="tool" data-tool="measureLine"><span class="ic">📏</span>거리측정</button>
+    <button class="tool" data-tool="measureArea"><span class="ic">📐</span>면적측정</button>
+    <button class="tool" data-tool="text"><span class="ic">🅣</span>텍스트</button>
+    <button class="tool" data-tool="erase"><span class="ic">🧽</span>지우개</button>
+    <div class="tdiv"></div>
+    <div class="palette" id="palette"></div>
+    <div class="tdiv"></div>
+    <div class="sizectl">
+      <span>크기·두께</span>
+      <input type="range" id="sizeRange" min="0.5" max="3" step="0.1" value="1">
+      <span id="sizeVal">×1.0</span>
+    </div>
+    <div class="sizectl" id="geoAlphaCtl" style="display:none">
+      <span>GeoTIFF 투명</span>
+      <input type="range" id="geoAlphaRange" min="0.1" max="1" step="0.05" value="1">
+      <span id="geoAlphaVal">100%</span>
+    </div>
+    <div class="sizectl">
+      <span>글자 배경</span>
+      <input type="range" id="bgRange" min="0" max="1" step="0.05" value="0.55">
+      <span id="bgVal">55%</span>
+    </div>
+    <div class="sizectl">
+      <span>배경색</span>
+      <div class="palette" id="bgPalette"></div>
+    </div>
+  </div>
 
-  <!-- 히어로 -->
-  <section class="hero">
-    <h2>경비 현장을 <span class="hl">예측 · 설계 · 관제</span>합니다</h2>
-    <p>인파 밀집 예측부터 실시간 관제, 경비 요도 작성까지 하나의 화면에서 수행하십시오.</p>
-  </section>
-
-  <!-- 기능 카드 -->
-  <section class="cards">
-    <a class="card" id="sim" href="simulator.html">
-      <div class="icon">
-        <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M15.5 20c0-2.4 1.6-4 3.5-4s3 1.2 3 3"/></svg>
-      </div>
-      <h3>AI 인파 시뮬레이터</h3>
-      <p class="desc">행사·집회 구역의 인원 유입과 밀집도를 사전에 모의하여 위험 구간과 병목 지점을 예측합니다.</p>
-      <ul><li>밀집도 예측</li><li>동선 분석</li><li>시나리오 비교</li></ul>
-      <span class="go">시뮬레이션 시작
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </span>
-    </a>
-
-    <a class="card" id="status" href="monitoring.html">
-      <span class="badge live">● LIVE</span>
-      <div class="icon">
-        <svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6h5"/></svg>
-      </div>
-      <h3>실시간 경비 현황</h3>
-      <p class="desc">배치 부대와 현장 인원, 구역별 밀집 상황을 실시간 지도 위에서 통합 관제합니다.</p>
-      <ul><li>오늘의 집회</li><li>CCTV 연동</li><li>부대 배치 현황</li><li>인파 위험도 AI 알림</li></ul>
-      <span class="go">관제 화면 열기
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </span>
-    </a>
-
-    <a class="card" id="plan" href="plan.html">
-      <div class="icon">
-        <svg viewBox="0 0 24 24"><path d="M9 4L3 6.5v13L9 17l6 2.5 6-2.5v-13L15 7 9 4z"/><path d="M9 4v13M15 7v12.5"/></svg>
-      </div>
-      <h3>경비 요도 제작</h3>
-      <p class="desc">지도 위에 부대·차단선·통제구역을 배치하여 경비 요도를 작성하고 출력·공유합니다.</p>
-      <ul><li>요도 편집</li><li>부호 배치</li><li>공유하기</li></ul>
-      <span class="go">요도 작성하기
-        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </span>
-    </a>
-  </section>
-
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="status"></div>
+    <div id="hint">✋ 드래그로 이동, 휠/두 손가락으로 확대·축소</div>
+    <div id="banner"></div>
+    <div id="finishBar">
+      <button id="finishDone">선 완료</button>
+      <button id="finishCancel">취소</button>
+    </div>
+    <div id="selBar">
+      <button id="selRename">이름 변경</button>
+      <button id="selDelete">삭제</button>
+    </div>
+    <div id="txtBox">
+      <textarea id="txtInput" rows="1"></textarea>
+    </div>
+  </div>
 </div>
 
-<!-- 푸터 -->
-<footer>
-  <div class="wrap">
-    <div class="footer-grid">
-      <div>
-        <strong>경비 통합 플랫폼</strong><br>
-        울산광역시 중구 성안로 112 (울산경찰청)<br>
-        본 시스템은 경찰 내부 업무용으로, 무단 접속 및 자료 유출 시 관련 법령에 따라 처벌될 수 있습니다.
-      </div>
-      <div class="dev-box">
-        <div class="k">시스템 개발 · 문의</div>
-        <div class="v">울산경찰청 <strong>금상렬</strong></div>
-        <div class="v"><a href="tel:0522102536">052-210-2536</a></div>
-      </div>
-    </div>
-    <div class="footer-note">© 2026 Ulsan Metropolitan Police Agency. All rights reserved.</div>
-  </div>
-</footer>
+<script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.21.0/dist/proj4.js"></script>
 
 <script>
-  // 실시간 시계
-  function tick(){
-    const n = new Date();
-    const days = ['일','월','화','수','목','금','토'];
-    const p = v => String(v).padStart(2,'0');
-    document.getElementById('clock').textContent =
-      `${n.getFullYear()}. ${p(n.getMonth()+1)}. ${p(n.getDate())}. (${days[n.getDay()]}) ${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
-  }
-  tick(); setInterval(tick, 1000);
+"use strict";
 
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const stage = document.getElementById('stage');
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+
+const state = {
+  mode: 'map',
+  baseLayer: 'osm',
+  view: { x: 0, y: 0, scale: 1 },
+  shapes: [],
+  tool: 'pan',
+  color: '#FF5A5F',
+  selected: -1,
+  draft: null,
+  photo: null,
+  photoURL: null,
+  geoPhoto: null,
+  geoAlpha: 1.0,
+  squadUnit: 1, squadTeam: 1, officerNo: 0,
+  size: 1,
+  textBg: 0.55,
+  textBgColor: '#000000',
+  projName: '',
+};
+const undoStack = [], redoStack = [];
+
+/* ── 지도 타일 ── */
+const TILE = 256, MINZ = 3, MAXZ = 19;
+const TILE_SOURCES = {
+  osm: {
+    url: (z, x, y) => 'https://tile.openstreetmap.org/' + z + '/' + x + '/' + y + '.png',
+    attrib: '© OpenStreetMap contributors',
+  },
+  sat: {
+    url: (z, x, y) => 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' + z + '/' + y + '/' + x,
+    attrib: '© Esri, Maxar, Earthstar Geographics',
+  },
+};
+const tileCache = new Map();
+let tileFails = 0;
+function tileImg(z, x, y) {
+  const n = 1 << z;
+  x = ((x % n) + n) % n;
+  if (y < 0 || y >= n) return null;
+  const src = TILE_SOURCES[state.baseLayer] || TILE_SOURCES.osm;
+  const key = state.baseLayer + '/' + z + '/' + x + '/' + y;
+  let t = tileCache.get(key);
+  if (!t) {
+    t = { img: new Image(), ok: false, err: false };
+    t.img.crossOrigin = 'anonymous';
+    t.img.onload = () => { t.ok = true; render(); };
+    t.img.onerror = () => { t.err = true; if (++tileFails === 6) showBanner('지도 타일을 불러올 수 없습니다. 네트워크를 확인해 주세요.'); };
+    t.img.src = src.url(z, x, y);
+    if (tileCache.size > 500) tileCache.delete(tileCache.keys().next().value);
+    tileCache.set(key, t);
+  }
+  return t;
+}
+
+function lonLatToWorld(lon, lat) {
+  const x = (lon + 180) / 360 * TILE;
+  const s = Math.sin(lat * Math.PI / 180);
+  const y = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * TILE;
+  return { x, y };
+}
+function worldToLat(y) {
+  const n = Math.PI - 2 * Math.PI * y / TILE;
+  return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+}
+function metersPerWorld() {
+  if (state.mode !== 'map') return 0;
+  const midY = state.view.y + (stage.clientHeight / 2) / state.view.scale;
+  return 40075016.686 / TILE * Math.cos(worldToLat(midY) * Math.PI / 180);
+}
+
+/* ── 좌표 변환 ── */
+const w2sX = wx => (wx - state.view.x) * state.view.scale;
+const w2sY = wy => (wy - state.view.y) * state.view.scale;
+const s2wX = sx => sx / state.view.scale + state.view.x;
+const s2wY = sy => sy / state.view.scale + state.view.y;
+
+function setMapView(lon, lat, z) {
+  const w = lonLatToWorld(lon, lat);
+  state.view.scale = Math.pow(2, z);
+  state.view.x = w.x - (stage.clientWidth / 2) / state.view.scale;
+  state.view.y = w.y - (stage.clientHeight / 2) / state.view.scale;
+}
+function zoomAt(sx, sy, factor) {
+  const min = state.mode === 'map' ? Math.pow(2, MINZ) : 0.02;
+  const max = state.mode === 'map' ? Math.pow(2, MAXZ + 0.99) : 60;
+  const ns = Math.min(max, Math.max(min, state.view.scale * factor));
+  const wx = s2wX(sx), wy = s2wY(sy);
+  state.view.scale = ns;
+  state.view.x = wx - sx / ns;
+  state.view.y = wy - sy / ns;
+}
+
+/* ── 실행취소 ── */
+function pushUndo() {
+  undoStack.push(JSON.stringify(state.shapes));
+  if (undoStack.length > 60) undoStack.shift();
+  redoStack.length = 0;
+  syncHeader();
+}
+function undo() {
+  if (!undoStack.length) return;
+  redoStack.push(JSON.stringify(state.shapes));
+  state.shapes = JSON.parse(undoStack.pop());
+  state.selected = -1; hideSelBar(); render(); syncHeader();
+}
+function redo() {
+  if (!redoStack.length) return;
+  undoStack.push(JSON.stringify(state.shapes));
+  state.shapes = JSON.parse(redoStack.pop());
+  state.selected = -1; hideSelBar(); render(); syncHeader();
+}
+
+/* ── 렌더링 ── */
+function resize() {
+  DPR = Math.max(1, window.devicePixelRatio || 1);
+  cv.width = stage.clientWidth * DPR;
+  cv.height = stage.clientHeight * DPR;
+  render();
+}
+window.addEventListener('resize', resize);
+
+function render() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const W = stage.clientWidth, H = stage.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+  drawBackground(ctx, W, H);
+  for (let i = 0; i < state.shapes.length; i++) drawShape(ctx, state.shapes[i], i === state.selected);
+  if (state.draft) drawDraft(ctx);
+  updateStatus();
+}
+
+function drawBackground(g, W, H) {
+  if (state.mode === 'photo') {
+    g.fillStyle = '#1B222D'; g.fillRect(0, 0, W, H);
+    if (state.photo) {
+      g.imageSmoothingEnabled = true;
+      g.drawImage(state.photo, w2sX(0), w2sY(0),
+        state.photo.width * state.view.scale, state.photo.height * state.view.scale);
+    } else {
+      g.fillStyle = '#5b6b83'; g.font = '14px sans-serif'; g.textAlign = 'center';
+      g.fillText('상단 [파일 열기]로 현장 사진을 불러오세요', W / 2, H / 2);
+      g.textAlign = 'left';
+    }
+    return;
+  }
+
+  // 1. 지도 타일
+  g.fillStyle = '#DDE3E9'; g.fillRect(0, 0, W, H);
+  let z = Math.round(Math.log2(state.view.scale));
+  z = Math.min(MAXZ, Math.max(MINZ, z));
+  const f = state.view.scale / Math.pow(2, z);
+  const wPerTile = TILE / Math.pow(2, z);
+  const x0 = Math.floor(state.view.x / wPerTile);
+  const y0 = Math.floor(state.view.y / wPerTile);
+  const x1 = Math.floor((state.view.x + W / state.view.scale) / wPerTile);
+  const y1 = Math.floor((state.view.y + H / state.view.scale) / wPerTile);
+  for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+    const t = tileImg(z, tx, ty);
+    if (t && t.ok) {
+      g.drawImage(t.img,
+        Math.floor(w2sX(tx * wPerTile)), Math.floor(w2sY(ty * wPerTile)),
+        Math.ceil(TILE * f) + 1, Math.ceil(TILE * f) + 1);
+    }
+  }
+
+  // 2. GeoTIFF 오버레이
+  if (state.geoPhoto) {
+    const gp = state.geoPhoto;
+    const sx0 = w2sX(gp.wx0), sy0 = w2sY(gp.wy0), sx1 = w2sX(gp.wx1), sy1 = w2sY(gp.wy1);
+    g.save();
+    g.globalAlpha = state.geoAlpha != null ? state.geoAlpha : 0.9;
+    g.drawImage(gp.canvas, sx0, sy0, sx1 - sx0, sy1 - sy0);
+    g.restore();
+  }
+
+  g.fillStyle = 'rgba(0,0,0,.45)'; g.font = '10px sans-serif';
+  g.fillText((TILE_SOURCES[state.baseLayer] || TILE_SOURCES.osm).attrib, 6, H - 6);
+}
+
+/* ── 도형 그리기 ── */
+function pathPts(g, pts) {
+  g.beginPath();
+  g.moveTo(w2sX(pts[0].x), w2sY(pts[0].y));
+  for (let i = 1; i < pts.length; i++) g.lineTo(w2sX(pts[i].x), w2sY(pts[i].y));
+}
+function drawTape(g, pts, k) {
+  k = k || 1;
+  g.lineCap = 'butt'; g.lineJoin = 'round';
+  pathPts(g, pts);
+  g.strokeStyle = '#111'; g.lineWidth = 14 * k; g.setLineDash([]); g.stroke();
+  pathPts(g, pts);
+  g.strokeStyle = '#FFD023'; g.lineWidth = 10 * k; g.stroke();
+  pathPts(g, pts);
+  g.strokeStyle = '#111'; g.lineWidth = 10 * k; g.setLineDash([9 * k, 9 * k]); g.stroke();
+  g.setLineDash([]);
+  labelAtMid(g, pts, '질서유지선', '#FFD023', '#111', k);
+}
+function drawBarrier(g, pts, k) {
+  k = k || 1;
+  g.lineCap = 'butt'; g.lineJoin = 'round';
+  pathPts(g, pts);
+  g.strokeStyle = '#2A2F36'; g.lineWidth = 16 * k; g.setLineDash([]); g.stroke();
+  pathPts(g, pts);
+  g.strokeStyle = '#8f9aa8'; g.lineWidth = 3 * k; g.setLineDash([14 * k, 10 * k]); g.stroke();
+  g.setLineDash([]);
+  labelAtMid(g, pts, '경찰버스', '#2A2F36', '#fff', k);
+}
+function labelAtMid(g, pts, text, bg, fg, k) {
+  k = Math.max(1, k || 1);
+  const m = pts[Math.floor((pts.length - 1) / 2)];
+  const n = pts[Math.min(pts.length - 1, Math.floor((pts.length - 1) / 2) + 1)];
+  const x = (w2sX(m.x) + w2sX(n.x)) / 2, y = (w2sY(m.y) + w2sY(n.y)) / 2;
+  g.font = 'bold ' + (10 * k) + 'px sans-serif';
+  const w = g.measureText(text).width + 10 * k, h = 15 * k, off = 20 * k;
+  g.fillStyle = bg; g.fillRect(x - w / 2, y - off, w, h);
+  g.strokeStyle = '#111'; g.lineWidth = 1; g.strokeRect(x - w / 2, y - off, w, h);
+  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, x, y - off + h / 2);
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+function drawArrowShape(g, a, b, color, k) {
+  k = k || 1;
+  const ax = w2sX(a.x), ay = w2sY(a.y), bx = w2sX(b.x), by = w2sY(b.y);
+  const ang = Math.atan2(by - ay, bx - ax);
+  const hd = Math.max(9, 14 * k);
+  g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 4 * k; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+  g.beginPath();
+  g.moveTo(bx, by);
+  g.lineTo(bx - hd * Math.cos(ang - 0.45), by - hd * Math.sin(ang - 0.45));
+  g.lineTo(bx - hd * Math.cos(ang + 0.45), by - hd * Math.sin(ang + 0.45));
+  g.closePath(); g.fill();
+}
+function drawPoliceBust(g, x, y, r, uniformFill, uniformStroke) {
+  g.save();
+  g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
+  g.fillStyle = '#EEF1F5'; g.fill();
+  g.lineWidth = Math.max(1, r * 0.1); g.strokeStyle = '#20242c'; g.stroke();
+  g.clip();
+
+  const shTop = y + r * 0.05, shBottom = y + r * 1.15;
+  g.beginPath();
+  g.moveTo(x - r * 0.88, shBottom);
+  g.lineTo(x - r * 0.46, shTop);
+  g.lineTo(x + r * 0.46, shTop);
+  g.lineTo(x + r * 0.88, shBottom);
+  g.closePath();
+  g.fillStyle = uniformFill; g.fill();
+  if (uniformStroke) { g.lineWidth = Math.max(1, r * 0.09); g.strokeStyle = uniformStroke; g.stroke(); }
+
+  g.beginPath();
+  g.moveTo(x, shTop + r * 0.08);
+  g.lineTo(x - r * 0.13, shTop + r * 0.4);
+  g.lineTo(x + r * 0.13, shTop + r * 0.4);
+  g.closePath();
+  g.fillStyle = '#1B2A41'; g.fill();
+
+  g.beginPath(); g.arc(x, y - r * 0.3, r * 0.4, 0, Math.PI * 2);
+  g.fillStyle = '#E8B98D'; g.fill();
+
+  g.beginPath(); g.arc(x, y - r * 0.56, r * 0.43, Math.PI, 0);
+  g.fillStyle = '#1B2A41'; g.fill();
+  g.beginPath(); g.ellipse(x, y - r * 0.42, r * 0.47, r * 0.12, 0, 0, Math.PI * 2);
+  g.fillStyle = '#1B2A41'; g.fill();
+  g.beginPath(); g.arc(x, y - r * 0.5, r * 0.08, 0, Math.PI * 2);
+  g.fillStyle = '#FFD023'; g.fill();
+  g.restore();
+}
+function drawBus(g, s, sel) {
+  const k = s.sz || 1;
+  const x = w2sX(s.x), y = w2sY(s.y);
+  const w = 58 * k, h = 24 * k;
+  const left = x - w / 2, top = y - h / 2;
+  const wheelR = h * 0.22;
+
+  roundRect(g, left, top, w, h, 4 * k);
+  g.fillStyle = '#F4F6F8'; g.fill();
+
+  g.save();
+  roundRect(g, left, top, w, h, 4 * k); g.clip();
+
+  const winTop = top + h * 0.12, winH = h * 0.42, winL = left + w * 0.06, winW = w * 0.60;
+  g.fillStyle = '#173A63';
+  g.fillRect(winL, winTop, winW, winH);
+  g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = Math.max(0.6, 0.9 * k);
+  for (let i = 1; i < 4; i++) {
+    const wx = winL + winW * (i / 4);
+    g.beginPath(); g.moveTo(wx, winTop); g.lineTo(wx, winTop + winH); g.stroke();
+  }
+  g.fillStyle = '#20456f';
+  g.fillRect(left + w * 0.70, winTop, w * 0.13, winH);
+
+  const beltTop = winTop + winH + h * 0.02, beltH = h * 0.13;
+  g.fillStyle = '#0D4EA6';
+  g.fillRect(left, beltTop, w, beltH);
+  g.fillStyle = '#F0B429';
+  g.fillRect(left, beltTop + beltH, w, Math.max(1, h * 0.035));
+
+  g.fillStyle = '#0D4EA6';
+  g.font = 'bold ' + Math.max(5, 6.2 * k) + 'px sans-serif';
+  g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.fillText('POLICE', left + w * 0.40, top + h * 0.85);
+
+  g.beginPath(); g.arc(left + w * 0.16, top + h * 0.83, h * 0.13, 0, Math.PI * 2);
+  g.fillStyle = '#F0B429'; g.fill();
+  g.lineWidth = Math.max(0.5, 0.6 * k); g.strokeStyle = '#0D4EA6'; g.stroke();
+  g.restore();
+
+  roundRect(g, left, top, w, h, 4 * k);
+  g.lineWidth = Math.max(1, 1.4 * k); g.strokeStyle = '#1B2A41'; g.stroke();
+
+  g.fillStyle = '#111';
+  g.beginPath(); g.arc(left + w * 0.22, top + h, wheelR, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(left + w * 0.78, top + h, wheelR, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#999';
+  g.beginPath(); g.arc(left + w * 0.22, top + h, wheelR * 0.42, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(left + w * 0.78, top + h, wheelR * 0.42, 0, Math.PI * 2); g.fill();
+
+  const bottomY = top + h + wheelR;
+  if (s.label) {
+    g.font = 'bold ' + (10 * Math.max(1, k)) + 'px sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    g.fillStyle = '#2A2F36';
+    g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 3;
+    g.strokeText(s.label, x, bottomY + 12 * k); g.fillText(s.label, x, bottomY + 12 * k);
+  }
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+
+  if (sel) {
+    g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.setLineDash([5, 4]);
+    g.strokeRect(left - 6, top - 6, w + 12, (bottomY - top) + 12);
+    g.setLineDash([]);
+  }
+}
+function drawOfficer(g, s, sel) {
+  const k = s.sz || 1;
+  const isTraffic = s.ptype === 'traffic';
+  const x = w2sX(s.x), y = w2sY(s.y);
+  const r = 15 * k;
+  drawPoliceBust(g, x, y, r, isTraffic ? '#FFFFFF' : '#0054A6', isTraffic ? '#0054A6' : null);
+  const tag = isTraffic ? '교통' : '경찰';
+  g.font = 'bold ' + (9 * Math.max(1, k)) + 'px sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.fillStyle = '#0054A6';
+  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 3;
+  const under = s.label ? (tag + ' ' + s.label) : tag;
+  g.strokeText(under, x, y + 27 * k); g.fillText(under, x, y + 27 * k);
+  g.textAlign = 'left';
+  if (sel) selRing(g, x, y, 20 * k);
+}
+function drawSquad(g, s, sel) {
+  const k = s.sz || 1;
+  const x = w2sX(s.x), y = w2sY(s.y);
+  g.font = 'bold ' + (12 * k) + 'px sans-serif';
+  const w = Math.max(56 * k, g.measureText(s.label).width + 22 * k);
+  const h = 28 * k;
+  g.fillStyle = '#0054A6';
+  g.strokeStyle = '#fff'; g.lineWidth = 2 * k;
+  roundRect(g, x - w / 2, y - h / 2, w, h, 7 * k); g.fill(); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1.5 * k;
+  g.beginPath(); g.moveTo(x - w / 2 + 4 * k, y + h / 2 - 4 * k); g.lineTo(x - w / 2 + 16 * k, y - h / 2 + 4 * k); g.stroke();
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(s.label, x + 5 * k, y + 0.5);
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  if (sel) selRing(g, x, y, Math.max(w / 2, 20 * k) + 6);
+}
+function roundRect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+function hexToRgba(hex, a) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = parseInt(hex.substr(0, 2), 16), g2 = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
+  return 'rgba(' + r + ',' + g2 + ',' + b + ',' + a + ')';
+}
+function textLines(s) { return (s.text || '').split('\n'); }
+function drawTextShape(g, s, sel) {
+  const k = s.sz || 1;
+  const x = w2sX(s.x), y = w2sY(s.y);
+  const fontPx = 14 * k, lineH = fontPx * 1.25;
+  g.font = 'bold ' + fontPx + 'px sans-serif';
+  const lines = textLines(s);
+  let w = 0;
+  for (const line of lines) w = Math.max(w, g.measureText(line).width);
+  const padX = 8 * k, padTop = 16 * k, padBot = 6 * k;
+  const bw = w + padX * 2, bh = padTop + padBot + lineH * (lines.length - 1);
+  const bx = x - padX, by = y - padTop;
+  const alpha = s.bg != null ? s.bg : 0.55;
+  if (alpha > 0.01) {
+    roundRect(g, bx, by, bw, bh, 5 * k);
+    g.fillStyle = hexToRgba(s.bgColor || '#000000', alpha); g.fill();
+  }
+  g.fillStyle = s.color; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  lines.forEach((line, i) => g.fillText(line, x, y + i * lineH));
+  if (sel) {
+    g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.setLineDash([4, 4]);
+    g.strokeRect(bx, by, bw, bh); g.setLineDash([]);
+    const hx = bx + bw + 4, hy = by + bh - 6;
+    g.fillStyle = '#37D3A0';
+    g.beginPath(); g.arc(hx, hy, 8, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#0E1420'; g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(hx - 3.5, hy + 3.5); g.lineTo(hx + 3.5, hy - 3.5);
+    g.moveTo(hx + 0.5, hy - 3.5); g.lineTo(hx + 3.5, hy - 3.5);
+    g.lineTo(hx + 3.5, hy - 0.5);
+    g.moveTo(hx - 0.5, hy + 3.5); g.lineTo(hx - 3.5, hy + 3.5);
+    g.lineTo(hx - 3.5, hy + 0.5);
+    g.stroke();
+  }
+}
+function textHandlePos(s) {
+  const k = s.sz || 1;
+  const fontPx = 14 * k, lineH = fontPx * 1.25;
+  ctx.font = 'bold ' + fontPx + 'px sans-serif';
+  const lines = textLines(s);
+  let w = 0;
+  for (const line of lines) w = Math.max(w, ctx.measureText(line).width);
+  const padX = 8 * k, padTop = 16 * k, padBot = 6 * k;
+  const bh = padTop + padBot + lineH * (lines.length - 1);
+  const bx = w2sX(s.x) - padX, by = w2sY(s.y) - padTop;
+  return { x: bx + w + padX * 2 + 4, y: by + bh - 6 };
+}
+function selRing(g, x, y, r) {
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 2; g.setLineDash([5, 4]);
+  g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+}
+
+/* ── 거리·면적 측정 ── */
+function polyLength(pts) {
+  let L = 0;
+  for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  return L;
+}
+function polygonArea(pts) {
+  let a = 0; const n = pts.length;
+  for (let i = 0; i < n; i++) { const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
+  return Math.abs(a) / 2;
+}
+function polygonCentroid(pts) {
+  let x = 0, y = 0;
+  for (const p of pts) { x += p.x; y += p.y; }
+  return { x: x / pts.length, y: y / pts.length };
+}
+function fmtMeasureLen(worldLen) {
+  if (state.mode === 'map') {
+    const m = worldLen * metersPerWorld();
+    return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m).toLocaleString() + ' m';
+  }
+  return Math.round(worldLen).toLocaleString() + ' px';
+}
+function fmtMeasureArea(worldArea) {
+  if (state.mode === 'map') {
+    const mpw = metersPerWorld(), m2 = worldArea * mpw * mpw;
+    if (m2 >= 1e6) return (m2 / 1e6).toFixed(2) + ' km²';
+    if (m2 >= 10000) return (m2 / 10000).toFixed(2) + ' ha';
+    return Math.round(m2).toLocaleString() + ' m²';
+  }
+  return Math.round(worldArea).toLocaleString() + ' px²';
+}
+function drawMeasureLabel(g, x, y, text) {
+  g.font = 'bold 11px sans-serif';
+  const w = g.measureText(text).width + 12, h = 19;
+  roundRect(g, x - w / 2, y - h / 2, w, h, 4);
+  g.fillStyle = 'rgba(14,20,32,.9)'; g.fill();
+  roundRect(g, x - w / 2, y - h / 2, w, h, 4);
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 1; g.stroke();
+  g.fillStyle = '#37D3A0'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, x, y + 0.5);
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+function drawMeasureLine(g, pts, sel) {
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 2.4; g.lineCap = 'round'; g.lineJoin = 'round'; g.setLineDash([8, 5]);
+  pathPts(g, pts); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#37D3A0';
+  for (const p of pts) { g.beginPath(); g.arc(w2sX(p.x), w2sY(p.y), 3.5, 0, Math.PI * 2); g.fill(); }
+  const last = pts[pts.length - 1];
+  drawMeasureLabel(g, w2sX(last.x), w2sY(last.y) - 16, fmtMeasureLen(polyLength(pts)));
+  if (sel) drawHandles(g, pts, true);
+}
+function drawMeasureArea(g, pts, sel) {
+  if (pts.length < 2) return;
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 2.2; g.setLineDash([8, 5]);
+  if (pts.length >= 3) {
+    pathPts(g, pts);
+    g.lineTo(w2sX(pts[0].x), w2sY(pts[0].y));
+    g.closePath();
+    g.fillStyle = 'rgba(55,211,160,0.16)'; g.fill();
+    g.stroke();
+  } else { pathPts(g, pts); g.stroke(); }
+  g.setLineDash([]);
+  g.fillStyle = '#37D3A0';
+  for (const p of pts) { g.beginPath(); g.arc(w2sX(p.x), w2sY(p.y), 3.5, 0, Math.PI * 2); g.fill(); }
+  if (pts.length >= 3) {
+    const c = polygonCentroid(pts);
+    drawMeasureLabel(g, w2sX(c.x), w2sY(c.y), fmtMeasureArea(polygonArea(pts)));
+  }
+  if (sel) drawHandles(g, pts, true);
+}
+function pointInPolyScreen(sx, sy, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = w2sX(pts[i].x), yi = w2sY(pts[i].y);
+    const xj = w2sX(pts[j].x), yj = w2sY(pts[j].y);
+    const hit = ((yi > sy) !== (yj > sy)) && (sx < (xj - xi) * (sy - yi) / (yj - yi) + xi);
+    if (hit) inside = !inside;
+  }
+  return inside;
+}
+
+const HANDLE_R = 9, HANDLE_HIT = 22;
+function drawHandles(g, pts, withMid) {
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.setLineDash([5, 4]);
+  pathPts(g, pts); g.stroke(); g.setLineDash([]);
+  if (withMid) {
+    for (let i = 1; i < pts.length; i++) {
+      const mx = (w2sX(pts[i-1].x) + w2sX(pts[i].x)) / 2;
+      const my = (w2sY(pts[i-1].y) + w2sY(pts[i].y)) / 2;
+      g.beginPath(); g.arc(mx, my, HANDLE_R - 2, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(22,32,47,.9)'; g.fill();
+      g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.stroke();
+      g.strokeStyle = '#37D3A0'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(mx - 4, my); g.lineTo(mx + 4, my);
+      g.moveTo(mx, my - 4); g.lineTo(mx, my + 4); g.stroke();
+    }
+  }
+  for (const p of pts) {
+    const x = w2sX(p.x), y = w2sY(p.y);
+    g.beginPath(); g.arc(x, y, HANDLE_R, 0, Math.PI * 2);
+    g.fillStyle = '#fff'; g.fill();
+    g.lineWidth = 3; g.strokeStyle = '#37D3A0'; g.stroke();
+  }
+}
+function editablePts(s) {
+  if (!s) return null;
+  if (s.type === 'line' || s.type === 'arrow' || s.type === 'pen' || s.type === 'measure_line' || s.type === 'measure_area') return s.pts;
+  return null;
+}
+function handleAt(sx, sy) {
+  if (state.selected < 0) return null;
+  const s = state.shapes[state.selected];
+  const pts = editablePts(s);
+  if (!pts) return null;
+  for (let i = 0; i < pts.length; i++) {
+    if (Math.hypot(sx - w2sX(pts[i].x), sy - w2sY(pts[i].y)) < HANDLE_HIT) return { kind: 'v', idx: i };
+  }
+  if (s.type === 'line' || s.type === 'pen' || s.type === 'measure_line' || s.type === 'measure_area') {
+    for (let i = 1; i < pts.length; i++) {
+      const mx = (w2sX(pts[i-1].x) + w2sX(pts[i].x)) / 2;
+      const my = (w2sY(pts[i-1].y) + w2sY(pts[i].y)) / 2;
+      if (Math.hypot(sx - mx, sy - my) < HANDLE_HIT) return { kind: 'm', idx: i };
+    }
+  }
+  return null;
+}
+function drawShape(g, s, sel) {
+  switch (s.type) {
+    case 'officer': drawOfficer(g, s, sel); break;
+    case 'squad':   drawSquad(g, s, sel); break;
+    case 'bus':     drawBus(g, s, sel); break;
+    case 'line':
+      s.kind === 'barrier' ? drawBarrier(g, s.pts, s.w) : drawTape(g, s.pts, s.w);
+      if (sel) drawHandles(g, s.pts, true);
+      break;
+    case 'arrow':
+      drawArrowShape(g, s.pts[0], s.pts[1], s.color, s.w);
+      if (sel) drawHandles(g, s.pts, false);
+      break;
+    case 'pen':
+      g.strokeStyle = s.color; g.lineWidth = 4 * (s.w || 1); g.lineCap = 'round'; g.lineJoin = 'round';
+      pathPts(g, s.pts); g.stroke();
+      if (sel) drawHandles(g, s.pts, true);
+      break;
+    case 'measure_line': drawMeasureLine(g, s.pts, sel); break;
+    case 'measure_area': drawMeasureArea(g, s.pts, sel); break;
+    case 'text':    drawTextShape(g, s, sel); break;
+  }
+}
+function drawDraft(g) {
+  const d = state.draft;
+  if (d.pts.length === 0) return;
+  const pts = d.cursor ? d.pts.concat([d.cursor]) : d.pts;
+  if (d.kind === 'measureLine') { if (pts.length >= 2) drawMeasureLine(g, pts, false); }
+  else if (d.kind === 'measureArea') { if (pts.length >= 2) drawMeasureArea(g, pts, false); }
+  else if (pts.length >= 2) {
+    if (d.kind === 'barrier') drawBarrier(g, pts, state.size);
+    else if (d.kind === 'pen') {
+      g.strokeStyle = state.color; g.lineWidth = 4 * state.size; g.lineCap = 'round'; g.lineJoin = 'round';
+      pathPts(g, pts); g.stroke();
+    } else drawTape(g, pts, state.size);
+  }
+  g.fillStyle = '#fff'; g.strokeStyle = '#111';
+  for (const p of d.pts) {
+    g.beginPath(); g.arc(w2sX(p.x), w2sY(p.y), 5, 0, Math.PI * 2); g.fill(); g.stroke();
+  }
+}
+
+/* ── 상태 카드 ── */
+function updateStatus() {
+  let genOff = 0, trafOff = 0, squads = 0, buses = 0, lineLen = 0;
+  const mpw = metersPerWorld();
+  for (const s of state.shapes) {
+    if (s.type === 'officer') { s.ptype === 'traffic' ? trafOff++ : genOff++; }
+    else if (s.type === 'squad') squads++;
+    else if (s.type === 'bus') buses++;
+    else if (s.type === 'line' && s.kind !== 'barrier') {
+      for (let i = 1; i < s.pts.length; i++)
+        lineLen += Math.hypot(s.pts[i].x - s.pts[i - 1].x, s.pts[i].y - s.pts[i - 1].y);
+    }
+  }
+  const fmt = L => state.mode === 'map'
+    ? Math.round(L * mpw).toLocaleString() + ' m'
+    : Math.round(L) + ' px';
+  document.getElementById('status').innerHTML =
+    '<span class="bl">●</span> 일반경찰 <b>' + genOff + '명</b><br>' +
+    '<span style="color:#fff;-webkit-text-stroke:1px #0054A6">●</span> 교통경찰 <b>' + trafOff + '명</b><br>' +
+    '<span class="bl">■</span> 부대 <b>' + squads + '개</b><br>' +
+    '<span style="color:#2A2F36;-webkit-text-stroke:1px #fff">■</span> 경찰버스 <b>' + buses + '대</b><br>' +
+    '<span class="yl">▬</span> 질서유지선 <b>' + fmt(lineLen) + '</b>';
+}
+
+/* ── 히트 테스트 ── */
+function distToSeg(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  let t = len2 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+function hitTest(sx, sy) {
+  for (let i = state.shapes.length - 1; i >= 0; i--) {
+    const s = state.shapes[i];
+    if (s.type === 'measure_area' && s.pts.length >= 3 && pointInPolyScreen(sx, sy, s.pts)) return i;
+    if (s.type === 'officer' || s.type === 'squad' || s.type === 'bus') {
+      const k = s.sz || 1;
+      const r = s.type === 'squad' ? 36 * k : (s.type === 'bus' ? 34 * k : 20 * k);
+      if (Math.hypot(sx - w2sX(s.x), sy - w2sY(s.y)) < r) return i;
+    } else if (s.type === 'text') {
+      const k = s.sz || 1;
+      const fontPx = 14 * k, lineH = fontPx * 1.25;
+      ctx.font = 'bold ' + fontPx + 'px sans-serif';
+      const lines = textLines(s);
+      let w = 0;
+      for (const line of lines) w = Math.max(w, ctx.measureText(line).width);
+      const bh = 16 * k + 6 * k + lineH * (lines.length - 1);
+      const x = w2sX(s.x), y = w2sY(s.y);
+      if (sx >= x - 8 * k && sx <= x + w + 8 * k && sy >= y - 16 * k && sy <= y - 16 * k + bh) return i;
+    } else {
+      const tol = Math.max(12, 8 * (s.w || 1) + 4);
+      const pts = s.pts;
+      for (let j = 1; j < pts.length; j++) {
+        if (distToSeg(sx, sy, w2sX(pts[j-1].x), w2sY(pts[j-1].y), w2sX(pts[j].x), w2sY(pts[j].y)) < tol) return i;
+      }
+    }
+  }
+  return -1;
+}
+
+/* ── 포인터 입력 ── */
+const pointers = new Map();
+let gesture = null;
+let lastTap = { t: 0, x: 0, y: 0 };
+
+function evtPos(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  cv.setPointerCapture(e.pointerId);
+  const p = evtPos(e);
+  pointers.set(e.pointerId, p);
+  if (txtBox.style.display !== 'none') commitTxt();
+
+  if (pointers.size === 2) {
+    const arr = [...pointers.values()];
+    gesture = { type: 'pinch', d: Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y),
+                cx: (arr[0].x + arr[1].x) / 2, cy: (arr[0].y + arr[1].y) / 2 };
+    return;
+  }
+  const wx = s2wX(p.x), wy = s2wY(p.y);
+  const t = state.tool;
+
+  if (t === 'pan') { gesture = { type: 'pan', px: p.x, py: p.y }; return; }
+
+  if (t === 'select') {
+    if (state.selected >= 0 && state.shapes[state.selected].type === 'text') {
+      const s = state.shapes[state.selected];
+      const hp = textHandlePos(s);
+      if (Math.hypot(p.x - hp.x, p.y - hp.y) < 22) {
+        pushUndo();
+        const d0 = Math.max(12, Math.hypot(p.x - w2sX(s.x), p.y - w2sY(s.y)));
+        gesture = { type: 'tresize', d0, sz0: s.sz || 1 };
+        return;
+      }
+    }
+    const h = handleAt(p.x, p.y);
+    if (h) {
+      const s = state.shapes[state.selected];
+      const now = Date.now();
+      const isDbl = now - lastTap.t < 350 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24;
+      lastTap = { t: now, x: p.x, y: p.y };
+      const minKeep = s.type === 'measure_area' ? 3 : 2;
+      if (h.kind === 'v' && isDbl && (s.type === 'line' || s.type === 'pen' || s.type === 'measure_line' || s.type === 'measure_area') && s.pts.length > minKeep) {
+        pushUndo(); s.pts.splice(h.idx, 1); render(); return;
+      }
+      pushUndo();
+      if (h.kind === 'm') { s.pts.splice(h.idx, 0, { x: wx, y: wy }); gesture = { type: 'vertex', idx: h.idx }; }
+      else gesture = { type: 'vertex', idx: h.idx };
+      render(); return;
+    }
+    const hit = hitTest(p.x, p.y);
+    const now2 = Date.now();
+    const isDblSel = hit >= 0 && hit === state.selected &&
+      now2 - lastTap.t < 400 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 26;
+    lastTap = { t: now2, x: p.x, y: p.y };
+    state.selected = hit;
+    if (hit >= 0) {
+      showSelBar();
+      syncSizeUI(); syncBgUI(); syncBgColorUI();
+      render();
+      if (isDblSel) { renameSelected(); return; }
+      pushUndo();
+      gesture = { type: 'move', wx, wy };
+    } else { hideSelBar(); syncSizeUI(); syncBgUI(); syncBgColorUI(); gesture = { type: 'pan', px: p.x, py: p.y }; }
+    render(); return;
+  }
+  if (t === 'erase') {
+    const hit = hitTest(p.x, p.y);
+    if (hit >= 0) { pushUndo(); state.shapes.splice(hit, 1); render(); }
+    return;
+  }
+  if (t === 'officer' || t === 'traffic') {
+    pushUndo();
+    state.officerNo++;
+    state.shapes.push({ type: 'officer', x: wx, y: wy, label: '', sz: state.size, ptype: t === 'traffic' ? 'traffic' : 'general' });
+    render(); return;
+  }
+  if (t === 'squad') {
+    pushUndo();
+    state.shapes.push({ type: 'squad', x: wx, y: wy, label: '제' + state.squadUnit + '기동대 ' + state.squadTeam + '팀', sz: state.size });
+    state.squadTeam++;
+    if (state.squadTeam > 8) { state.squadTeam = 1; state.squadUnit++; }
+    render(); return;
+  }
+  if (t === 'bus') {
+    pushUndo();
+    state.shapes.push({ type: 'bus', x: wx, y: wy, label: '', sz: state.size });
+    render(); return;
+  }
+  if (t === 'policeline') {
+    const now = Date.now();
+    const isDbl = now - lastTap.t < 350 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24;
+    lastTap = { t: now, x: p.x, y: p.y };
+    if (!state.draft) { state.draft = { kind: 'police', pts: [{ x: wx, y: wy }] }; showFinishBar(); }
+    else if (isDbl) { finishDraft(); return; }
+    else state.draft.pts.push({ x: wx, y: wy });
+    render(); return;
+  }
+  if (t === 'measureLine' || t === 'measureArea') {
+    const now = Date.now();
+    const isDbl = now - lastTap.t < 350 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24;
+    lastTap = { t: now, x: p.x, y: p.y };
+    if (!state.draft) { state.draft = { kind: t, pts: [{ x: wx, y: wy }] }; showFinishBar(); }
+    else if (isDbl) { finishDraft(); return; }
+    else state.draft.pts.push({ x: wx, y: wy });
+    render(); return;
+  }
+  if (t === 'arrow') { gesture = { type: 'arrow', a: { x: wx, y: wy }, b: { x: wx, y: wy } }; return; }
+  if (t === 'pen') {
+    const now = Date.now();
+    const isDbl = now - lastTap.t < 350 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24;
+    lastTap = { t: now, x: p.x, y: p.y };
+    if (!state.draft) { state.draft = { kind: 'pen', pts: [{ x: wx, y: wy }] }; showFinishBar(); }
+    else if (isDbl) { finishDraft(); return; }
+    else state.draft.pts.push({ x: wx, y: wy });
+    render(); return;
+  }
+  if (t === 'text')  {
+    showTxtBox(p.x, p.y, wx, wy, '', null, {
+      center: true, multiline: true, sz: state.size,
+      color: state.color, bg: state.textBg, bgColor: state.textBgColor,
+    });
+    return;
+  }
+});
+
+cv.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) {
+    if (state.draft && pointers.size === 0) {
+      const p = evtPos(e);
+      state.draft.cursor = { x: s2wX(p.x), y: s2wY(p.y) };
+      render();
+    }
+    return;
+  }
+  const p = evtPos(e);
+  pointers.set(e.pointerId, p);
+
+  if (gesture && gesture.type === 'pinch' && pointers.size === 2) {
+    const arr = [...pointers.values()];
+    const d = Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
+    const cx = (arr[0].x + arr[1].x) / 2, cy = (arr[0].y + arr[1].y) / 2;
+    if (gesture.d > 0) zoomAt(cx, cy, d / gesture.d);
+    state.view.x -= (cx - gesture.cx) / state.view.scale;
+    state.view.y -= (cy - gesture.cy) / state.view.scale;
+    gesture.d = d; gesture.cx = cx; gesture.cy = cy;
+    render(); return;
+  }
+  if (!gesture) return;
+
+  if (gesture.type === 'pan') {
+    state.view.x -= (p.x - gesture.px) / state.view.scale;
+    state.view.y -= (p.y - gesture.py) / state.view.scale;
+    gesture.px = p.x; gesture.py = p.y;
+    render();
+  } else if (gesture.type === 'tresize' && state.selected >= 0) {
+    const s = state.shapes[state.selected];
+    const d = Math.hypot(p.x - w2sX(s.x), p.y - w2sY(s.y));
+    s.sz = Math.min(6, Math.max(0.3, gesture.sz0 * d / gesture.d0));
+    syncSizeUI(); render();
+  } else if (gesture.type === 'vertex' && state.selected >= 0) {
+    const s = state.shapes[state.selected];
+    const pts = editablePts(s);
+    if (pts && pts[gesture.idx]) {
+      pts[gesture.idx].x = s2wX(p.x);
+      pts[gesture.idx].y = s2wY(p.y);
+      render();
+    }
+  } else if (gesture.type === 'move' && state.selected >= 0) {
+    const wx = s2wX(p.x), wy = s2wY(p.y);
+    const dx = wx - gesture.wx, dy = wy - gesture.wy;
+    gesture.wx = wx; gesture.wy = wy;
+    const s = state.shapes[state.selected];
+    if (s.pts) for (const q of s.pts) { q.x += dx; q.y += dy; }
+    else { s.x += dx; s.y += dy; }
+    positionSelBar(); render();
+  } else if (gesture.type === 'arrow') {
+    gesture.b = { x: s2wX(p.x), y: s2wY(p.y) };
+    render();
+    drawArrowShape(ctx, gesture.a, gesture.b, state.color, state.size);
+  }
+});
+
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (gesture) {
+    if (gesture.type === 'arrow') {
+      const L = Math.hypot(gesture.b.x - gesture.a.x, gesture.b.y - gesture.a.y) * state.view.scale;
+      if (L > 12) { pushUndo(); state.shapes.push({ type: 'arrow', pts: [gesture.a, gesture.b], color: state.color, w: state.size }); }
+    }
+    if (pointers.size === 0) gesture = null;
+    else if (pointers.size === 1 && gesture.type === 'pinch') {
+      const rest = [...pointers.values()][0];
+      gesture = { type: 'pan', px: rest.x, py: rest.y };
+    }
+    render();
+  }
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', endPointer);
+
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const p = evtPos(e);
+  zoomAt(p.x, p.y, Math.pow(1.0016, -e.deltaY));
+  render();
+}, { passive: false });
+
+/* ── 선 완료 바 ── */
+const finishBar = document.getElementById('finishBar');
+function showFinishBar() { finishBar.style.display = 'flex'; }
+function hideFinishBar() { finishBar.style.display = 'none'; }
+function finishDraft() {
+  const d = state.draft;
+  if (d) {
+    if (d.kind === 'pen' && d.pts.length >= 2) {
+      pushUndo();
+      state.shapes.push({ type: 'pen', pts: d.pts, color: state.color, w: state.size });
+    } else if (d.kind === 'measureLine' && d.pts.length >= 2) {
+      pushUndo();
+      state.shapes.push({ type: 'measure_line', pts: d.pts });
+    } else if (d.kind === 'measureArea' && d.pts.length >= 3) {
+      pushUndo();
+      state.shapes.push({ type: 'measure_area', pts: d.pts });
+    } else if (d.kind === 'police' && d.pts.length >= 2) {
+      pushUndo();
+      state.shapes.push({ type: 'line', kind: 'police', pts: d.pts, w: state.size });
+    }
+  }
+  state.draft = null; hideFinishBar(); render();
+}
+document.getElementById('finishDone').onclick = finishDraft;
+document.getElementById('finishCancel').onclick = () => { state.draft = null; hideFinishBar(); render(); };
+
+/* ── 선택 바 ── */
+const selBar = document.getElementById('selBar');
+function showSelBar() { selBar.style.display = 'flex'; }
+function hideSelBar() { selBar.style.display = 'none'; }
+function positionSelBar() {}
+document.getElementById('selDelete').onclick = () => {
+  if (state.selected >= 0) {
+    state.shapes.splice(state.selected, 1);
+    state.selected = -1; hideSelBar(); render();
+  }
+};
+function renameSelected() {
+  if (state.selected < 0) return;
+  const s = state.shapes[state.selected];
+  if (!(s.type === 'squad' || s.type === 'officer' || s.type === 'bus' || s.type === 'text')) return;
+  const cur = s.type === 'text' ? s.text : s.label;
+  const k = s.sz || 1;
+  const cx = w2sX(s.x), cy = w2sY(s.y);
+
+  if (s.type === 'text') {
+    showTxtBox(cx, cy, null, null, cur, val => {
+      pushUndo(); s.text = val; render();
+    }, { center: true, multiline: true, sz: k, color: s.color, bg: s.bg, bgColor: s.bgColor });
+    return;
+  }
+  let topY = cy - 15 * k;
+  if (s.type === 'squad') topY = cy - 14 * k;
+  else if (s.type === 'bus') topY = cy - 12 * k;
+  const sx = Math.max(8, Math.min(cx - 95, stage.clientWidth - 208));
+  const sy = Math.max(8, topY - 8);
+  showTxtBox(sx, sy, null, null, cur, val => {
+    pushUndo(); s.label = val; render();
+  }, { multiline: false, sz: 1, color: '#FFD023' });
+}
+document.getElementById('selRename').onclick = renameSelected;
+
+/* ── 텍스트 입력 팝업 ── */
+const txtBox = document.getElementById('txtBox');
+const txtInput = document.getElementById('txtInput');
+let txtCb = null, txtClosing = true;
+function autoSizeTxtInput() {
+  const k = parseFloat(txtInput.dataset.scale || '1');
+  const fontPx = Math.max(10, 14 * k);
+  txtInput.style.fontSize = fontPx + 'px';
+  ctx.font = 'bold ' + fontPx + 'px sans-serif';
+  const lines = txtInput.value.split('\n');
+  let maxW = 30;
+  for (const line of lines) maxW = Math.max(maxW, ctx.measureText(line || ' ').width);
+  txtInput.style.width = Math.min(420, maxW + 12) + 'px';
+  txtInput.style.height = 'auto';
+  txtInput.style.height = txtInput.scrollHeight + 'px';
+}
+function showTxtBox(sx, sy, wx, wy, initial, cb, opts) {
+  opts = opts || {};
+  const k = opts.sz != null ? opts.sz : 1;
+  txtClosing = false;
+  txtBox.style.display = 'block';
+  txtInput.dataset.scale = k;
+  txtInput.dataset.multiline = opts.multiline ? '1' : '0';
+  txtInput.style.color = opts.color || '#FFD023';
+  const alpha = opts.bg != null ? opts.bg : 0;
+  txtInput.style.background = alpha > 0.01 ? hexToRgba(opts.bgColor || '#000000', alpha) : 'transparent';
+  txtInput.value = initial || '';
+  autoSizeTxtInput();
+  const boxW = parseFloat(txtInput.style.width), boxH = parseFloat(txtInput.style.height);
+  let left = sx, top = sy;
+  if (opts.center) { left = sx - boxW / 2; top = sy - boxH * 0.72; }
+  else top = sy - boxH;
+  left = Math.max(4, Math.min(left, stage.clientWidth - boxW - 4));
+  top = Math.max(4, Math.min(top, stage.clientHeight - boxH - 4));
+  txtBox.style.left = left + 'px';
+  txtBox.style.top = top + 'px';
+  txtCb = cb || (val => {
+    pushUndo();
+    state.shapes.push({ type: 'text', x: wx, y: wy, text: val, color: state.color, sz: state.size, bg: state.textBg, bgColor: state.textBgColor });
+    render();
+  });
+  setTimeout(() => { txtInput.focus(); if (initial) txtInput.select(); }, 30);
+}
+function hideTxtBox() { txtBox.style.display = 'none'; }
+function commitTxt() {
+  if (txtClosing) return;
+  txtClosing = true;
+  const v = txtInput.value.replace(/\n+$/, '');
+  hideTxtBox();
+  if (v.trim() && txtCb) txtCb(v);
+  txtCb = null;
+}
+function cancelTxt() {
+  if (txtClosing) return;
+  txtClosing = true;
+  hideTxtBox();
+  txtCb = null;
+}
+txtInput.addEventListener('input', autoSizeTxtInput);
+txtInput.addEventListener('blur', () => commitTxt());
+txtInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.preventDefault(); cancelTxt(); txtInput.blur(); }
+  else if (e.key === 'Enter') {
+    const multi = txtInput.dataset.multiline === '1';
+    if (!multi || e.ctrlKey || e.metaKey) { e.preventDefault(); txtInput.blur(); }
+  }
+});
+
+/* ── 배너 ── */
+let bannerTimer = null;
+function showBanner(msg) {
+  const b = document.getElementById('banner');
+  b.textContent = msg; b.style.display = 'block';
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => b.style.display = 'none', 6000);
+}
+
+/* ── 도구/색상 UI ── */
+document.querySelectorAll('.tool').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tool').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    state.tool = btn.dataset.tool;
+    const draftTools = ['policeline', 'pen', 'measureLine', 'measureArea'];
+    if (!draftTools.includes(state.tool) && state.draft) finishDraft();
+    if (state.tool !== 'select') { state.selected = -1; hideSelBar(); }
+    const hints = {
+      pan: '✋ 드래그로 이동, 휠/두 손가락으로 확대·축소',
+      select: '탭해 선택·드래그 이동 · 더블탭하면 바로 이름변경 · 선은 꼭지점, 텍스트는 핸들로 크기 조절',
+      officer: '배치 지점을 탭하면 일반경찰(파란색) 표식이 생깁니다',
+      traffic: '배치 지점을 탭하면 교통경찰(흰색) 표식이 생깁니다',
+      squad: '탭하면 기동대 팀이 자동 부여됩니다 · 더블탭으로 수정',
+      policeline: '탭으로 꺾인점 추가 → 더블탭 또는 [선 완료]',
+      bus: '배치 지점을 탭하면 경찰버스 표식이 생깁니다',
+      arrow: '드래그해서 동선 화살표를 그립니다',
+      pen: '탭으로 꼭지점을 찍어 직선을 그립니다 → 더블탭 또는 [선 완료]',
+      measureLine: '탭으로 지점을 찍어 거리를 잽니다(m/km) → 더블탭 또는 [선 완료]',
+      measureArea: '탭으로 꼭지점을 찍어 면적을 잽니다(m²/ha) → 더블탭 또는 [선 완료]',
+      text: '탭한 위치에 텍스트를 입력합니다',
+      erase: '지울 도형을 탭하세요',
+    };
+    document.getElementById('hint').textContent = hints[state.tool] || '';
+    render();
+  });
+});
+const COLORS = ['#FF5A5F', '#3B7BFF', '#FFD023', '#37D3A0', '#FFFFFF', '#111111'];
+const paletteEl = document.getElementById('palette');
+COLORS.forEach((c, i) => {
+  const d = document.createElement('div');
+  d.className = 'sw' + (i === 0 ? ' on' : '');
+  d.style.background = c;
+  d.onclick = () => {
+    document.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+    d.classList.add('on');
+    state.color = c;
+  };
+  paletteEl.appendChild(d);
+});
+
+/* 크기·두께 조절 */
+const sizeRange = document.getElementById('sizeRange');
+const sizeVal = document.getElementById('sizeVal');
+function shapeScale(s) { return s.sz != null ? s.sz : (s.w != null ? s.w : 1); }
+function setShapeScale(s, v) {
+  if (s.type === 'officer' || s.type === 'squad' || s.type === 'bus' || s.type === 'text') s.sz = v;
+  else if (s.type !== 'measure_line' && s.type !== 'measure_area') s.w = v;
+}
+function syncSizeUI() {
+  const v = state.selected >= 0 ? shapeScale(state.shapes[state.selected]) : state.size;
+  sizeRange.value = v;
+  sizeVal.textContent = '×' + Number(v).toFixed(1);
+}
+sizeRange.addEventListener('input', () => {
+  const v = parseFloat(sizeRange.value);
+  sizeVal.textContent = '×' + v.toFixed(1);
+  if (state.selected >= 0) {
+    setShapeScale(state.shapes[state.selected], v);
+    render();
+  } else state.size = v;
+});
+
+/* GeoTIFF 투명도 조절 */
+const geoAlphaRange = document.getElementById('geoAlphaRange');
+const geoAlphaVal = document.getElementById('geoAlphaVal');
+geoAlphaRange.addEventListener('input', () => {
+  state.geoAlpha = parseFloat(geoAlphaRange.value);
+  geoAlphaVal.textContent = Math.round(state.geoAlpha * 100) + '%';
+  render();
+});
+
+/* 텍스트 배경 */
+const bgRange = document.getElementById('bgRange');
+const bgVal = document.getElementById('bgVal');
+function syncBgUI() {
+  const sel = state.selected >= 0 ? state.shapes[state.selected] : null;
+  const v = (sel && sel.type === 'text') ? (sel.bg != null ? sel.bg : 0.55) : state.textBg;
+  bgRange.value = v;
+  bgVal.textContent = Math.round(v * 100) + '%';
+}
+bgRange.addEventListener('input', () => {
+  const v = parseFloat(bgRange.value);
+  bgVal.textContent = Math.round(v * 100) + '%';
+  const sel = state.selected >= 0 ? state.shapes[state.selected] : null;
+  if (sel && sel.type === 'text') { sel.bg = v; render(); }
+  else state.textBg = v;
+});
+
+/* 텍스트 배경색 */
+const BG_COLORS = ['#000000', '#FFFFFF', '#0D2A4A', '#7A1F1F', '#1B2A41', '#F0B429'];
+const bgPaletteEl = document.getElementById('bgPalette');
+BG_COLORS.forEach((c, i) => {
+  const d = document.createElement('div');
+  d.className = 'sw' + (i === 0 ? ' on' : '');
+  d.style.background = c;
+  if (c === '#FFFFFF') d.style.boxShadow = 'inset 0 0 0 1px #667';
+  d.onclick = () => {
+    bgPaletteEl.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+    d.classList.add('on');
+    const sel = state.selected >= 0 ? state.shapes[state.selected] : null;
+    if (sel && sel.type === 'text') { pushUndo(); sel.bgColor = c; render(); }
+    else state.textBgColor = c;
+  };
+  bgPaletteEl.appendChild(d);
+});
+function syncBgColorUI() {
+  const sel = state.selected >= 0 ? state.shapes[state.selected] : null;
+  const c = (sel && sel.type === 'text') ? (sel.bgColor || '#000000') : state.textBgColor;
+  bgPaletteEl.querySelectorAll('.sw').forEach((s, i) => s.classList.toggle('on', BG_COLORS[i] === c));
+}
+
+/* 프로젝트명 */
+const projInput = document.getElementById('projName');
+projInput.addEventListener('input', () => {
+  state.projName = projInput.value.trim();
+  document.title = state.projName ? state.projName + ' · 경비요도 제작' : '경비요도 제작';
+});
+
+/* 헤더 버튼 */
+function syncHeader() {
+  document.getElementById('btnUndo').disabled = !undoStack.length;
+  document.getElementById('btnRedo').disabled = !redoStack.length;
+}
+document.getElementById('btnUndo').onclick = undo;
+document.getElementById('btnRedo').onclick = redo;
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (document.activeElement === txtInput) return;
+    if (state.selected >= 0) { pushUndo(); state.shapes.splice(state.selected, 1); state.selected = -1; hideSelBar(); render(); }
+  }
+  if (e.key === 'Enter' && state.draft) finishDraft();
+});
+
+document.getElementById('btnClear').onclick = () => {
+  if (!state.shapes.length) return;
+  pushUndo(); state.shapes = []; state.selected = -1;
+  state.squadUnit = 1; state.squadTeam = 1; state.officerNo = 0;
+  hideSelBar(); render();
+};
+
+/* 모드 전환 */
+const savedView = { map: null, photo: null };
+let modeInited = false;
+function setMode(m) {
+  if (modeInited && m === state.mode) return;
+  if (modeInited) savedView[state.mode] = { ...state.view };
+  state.mode = m;
+  modeInited = true;
+  document.getElementById('modeMap').classList.toggle('on', m === 'map');
+  document.getElementById('modePhoto').classList.toggle('on', m === 'photo');
+  document.getElementById('layerSeg').style.display = m === 'map' ? '' : 'none';
+  if (savedView[m]) state.view = { ...savedView[m] };
+  else if (m === 'map') setMapView(129.3106, 35.5744, 17);
+  else if (state.photo) fitPhoto();
+  else state.view = { x: 0, y: 0, scale: 1 };
+  render();
+}
+document.getElementById('modeMap').onclick = () => setMode('map');
+document.getElementById('modePhoto').onclick = () => setMode('photo');
+document.getElementById('layerOsm').onclick = () => {
+  if (state.baseLayer === 'osm') return;
+  state.baseLayer = 'osm'; tileFails = 0;
+  document.getElementById('layerOsm').classList.add('on');
+  document.getElementById('layerSat').classList.remove('on');
+  render();
+};
+document.getElementById('layerSat').onclick = () => {
+  if (state.baseLayer === 'sat') return;
+  state.baseLayer = 'sat'; tileFails = 0;
+  document.getElementById('layerSat').classList.add('on');
+  document.getElementById('layerOsm').classList.remove('on');
+  render();
+};
+
+/* ─────────────────────────────────────────────────────────────
+   GeoTIFF & 한국 좌표계 변환 엔진 (Proj4 & GeoTIFF.js)
+───────────────────────────────────────────────────────────── */
+const KOREA_PROJ4_DEFS = {
+  3857: '+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs',
+  4326: '+proj=longlat +datum=WGS84 +no_defs',
+  5174: '+proj=tmerc +lat_0=38 +lon_0=127.0028902777778 +k=1 +x_0=200000 +y_0=500000 +ellps=bessel +units=m +towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43 +no_defs',
+  5178: '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=bessel +towgs84=-145.907,505.034,685.756,-1.162,2.347,1.592,6.342 +units=m +no_defs',
+  5179: '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5181: '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5185: '+proj=tmerc +lat_0=38 +lon_0=125 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5186: '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5187: '+proj=tmerc +lat_0=38 +lon_0=129 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5188: '+proj=tmerc +lat_0=38 +lon_0=131 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  32651: '+proj=utm +zone=51 +datum=WGS84 +units=m +no_defs',
+  32652: '+proj=utm +zone=52 +datum=WGS84 +units=m +no_defs',
+};
+
+if (typeof proj4 !== 'undefined') {
+  for (const [epsg, def] of Object.entries(KOREA_PROJ4_DEFS)) {
+    proj4.defs('EPSG:' + epsg, def);
+  }
+}
+
+function geoToLonLat(epsg, x, y) {
+  if (epsg === 4326) return { lon: x, lat: y };
+  if (typeof proj4 === 'undefined') return null;
+  const key = 'EPSG:' + epsg;
+  try {
+    const r = proj4(key, 'EPSG:4326', [x, y]);
+    if (!r || !isFinite(r[0]) || !isFinite(r[1])) return null;
+    return { lon: r[0], lat: r[1] };
+  } catch (e) { return null; }
+}
+
+function guessKoreanEPSG(minX, minY, maxX, maxY) {
+  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+  if (cx >= 124 && cx <= 132 && cy >= 33 && cy <= 39) return 4326;
+  if (cx >= 700000 && cx <= 1300000 && cy >= 1500000 && cy <= 2200000) return 5179;
+  if (cx >= 100000 && cx <= 350000 && cy >= 400000 && cy <= 750000) return 5186;
+  if (cx >= 100000 && cx <= 350000 && cy >= 300000 && cy <= 450000) return 5174;
+  if (cx >= 300000 && cx <= 650000 && cy >= 3500000 && cy <= 4300000) return 32652;
+  if (cx >= 13000000 && cx <= 15000000 && cy >= 3800000 && cy <= 4800000) return 3857;
+  return null;
+}
+
+function placeGeoImage(canvas, bbox, epsg) {
+  const [minX, minY, maxX, maxY] = bbox;
+  const llTL = geoToLonLat(epsg, minX, maxY);
+  const llBR = geoToLonLat(epsg, maxX, minY);
+
+  if (!llTL || !llBR) {
+    showBanner('좌표계(EPSG:' + epsg + ') 변환에 실패하여 일반 사진으로 불러옵니다.');
+    loadPhoto(canvas.toDataURL('image/png'));
+    return;
+  }
+
+  const wTL = lonLatToWorld(llTL.lon, llTL.lat);
+  const wBR = lonLatToWorld(llBR.lon, llBR.lat);
+
+  state.geoPhoto = { canvas, wx0: wTL.x, wy0: wTL.y, wx1: wBR.x, wy1: wBR.y };
+  document.getElementById('btnGeoClear').style.display = '';
+  document.getElementById('geoAlphaCtl').style.display = '';
+
+  if (state.mode !== 'map') setMode('map');
+
+  fitToGeoPhoto();
+  showBanner('GeoTIFF(EPSG:' + epsg + ')를 실제 지도 위에 정확히 배치했습니다.');
+  render();
+}
+
+function fitToGeoPhoto() {
+  const gp = state.geoPhoto; if (!gp) return;
+  const w = Math.abs(gp.wx1 - gp.wx0), h = Math.abs(gp.wy1 - gp.wy0);
+  if (!w || !h) return;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const s = Math.min(W / w, H / h) * 0.92;
+  state.view.scale = s;
+  const cx = (gp.wx0 + gp.wx1) / 2, cy = (gp.wy0 + gp.wy1) / 2;
+  state.view.x = cx - (W / 2) / s;
+  state.view.y = cy - (H / 2) / s;
+}
+
+document.getElementById('btnGeoClear').onclick = () => {
+  state.geoPhoto = null;
+  document.getElementById('btnGeoClear').style.display = 'none';
+  document.getElementById('geoAlphaCtl').style.display = 'none';
+  render();
+};
+
+/* ── 파일 열기 처리 ── */
+document.getElementById('btnPhoto').onclick = () => document.getElementById('fileImg').click();
+document.getElementById('fileImg').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  openImageFile(f);
+  e.target.value = '';
+});
+
+function isTiffFile(f) {
+  return /\.tiff?$/i.test(f.name || '') || f.type === 'image/tiff' || f.type === 'image/tif';
+}
+
+function openImageFile(f) {
+  if (isTiffFile(f)) { loadGeoTiffFile(f); return; }
+  const rd = new FileReader();
+  rd.onload = () => loadPhoto(rd.result);
+  rd.readAsDataURL(f);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   GeoTIFF 무결점 독립 밴드 디코더 (R/G/B 채널 간섭 및 왜곡 완전 제거)
+───────────────────────────────────────────────────────────── */
+async function loadGeoTiffFile(file) {
+  if (typeof GeoTIFF === 'undefined') {
+    showBanner('GeoTIFF 엔진을 로드하지 못했습니다.');
+    return;
+  }
+  showBanner('GeoTIFF 영상을 실제 색상으로 불러오는 중입니다…');
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const tiff = await GeoTIFF.fromArrayBuffer(arrayBuffer);
+    const image = await tiff.getImage();
+
+    const width = image.getWidth();
+    const height = image.getHeight();
+    const bbox = image.getBoundingBox();
+    const geoKeys = image.getGeoKeys() || {};
+    const samplesPerPixel = image.getSamplesPerPixel() || 3;
+
+    let epsg = geoKeys.ProjectedCSTypeGeoKey || geoKeys.GeographicTypeGeoKey || geoKeys.ProjectionGeoKey;
+    if (!epsg || epsg === 32767 || !KOREA_PROJ4_DEFS[epsg]) {
+      epsg = guessKoreanEPSG(bbox[0], bbox[1], bbox[2], bbox[3]);
+    }
+
+    const totalPixels = width * height;
+
+    // 밴드를 개별 플랫 버퍼로 직접 추출 (채널 꼬임 원천 차단)
+    const rasters = await image.readRasters();
+    
+    let rBand, gBand, bBand, aBand = null;
+
+    if (rasters[0] && (rasters[0].length !== undefined)) {
+      // rasters = [band0, band1, band2, ...]
+      rBand = rasters[0];
+      gBand = rasters.length > 1 ? rasters[1] : rasters[0];
+      bBand = rasters.length > 2 ? rasters[2] : rasters[0];
+      if (rasters.length >= 4) aBand = rasters[3];
+    } else {
+      // 1차원 인터리브 버퍼인 경우
+      const numB = samplesPerPixel || 3;
+      rBand = new rasters.constructor(totalPixels);
+      gBand = new rasters.constructor(totalPixels);
+      bBand = new rasters.constructor(totalPixels);
+      if (numB >= 4) aBand = new rasters.constructor(totalPixels);
+      for (let p = 0; p < totalPixels; p++) {
+        rBand[p] = rasters[p * numB];
+        gBand[p] = numB > 1 ? rasters[p * numB + 1] : rasters[p * numB];
+        bBand[p] = numB > 2 ? rasters[p * numB + 2] : rasters[p * numB];
+        if (numB >= 4) aBand[p] = rasters[p * numB + 3];
+      }
+    }
+
+    // 비트 심도 및 TypedArray 형식 확인
+    const bps = image.getBitsPerSample();
+    const bits = Array.isArray(bps) ? bps[0] : (bps || 8);
+
+    const is8Bit = bits === 8 || rBand instanceof Uint8Array || rBand instanceof Uint8ClampedArray;
+    const is16Bit = bits === 16 || rBand instanceof Uint16Array || rBand instanceof Int16Array;
+
+    const srcCanvas = document.createElement('canvas');
+    srcCanvas.width = width;
+    srcCanvas.height = height;
+    const srcCtx = srcCanvas.getContext('2d');
+    const imgData = srcCtx.createImageData(width, height);
+    const data = imgData.data;
+
+    if (is8Bit) {
+      // 8비트 표준 정사영상 (1:1 무손실 다이렉트 렌더링)
+      for (let p = 0, j = 0; p < totalPixels; p++, j += 4) {
+        const r = rBand[p] & 0xFF;
+        const g = gBand[p] & 0xFF;
+        const b = bBand[p] & 0xFF;
+
+        if (r === 0 && g === 0 && b === 0) {
+          data[j + 3] = 0;
+          continue;
+        }
+
+        data[j] = r;
+        data[j + 1] = g;
+        data[j + 2] = b;
+        data[j + 3] = 255;
+      }
+    } else if (is16Bit) {
+      // 16비트 정사영상 (비트 쉬프트 기반 안전 하이라이트 보존)
+      let maxVal = 0;
+      const step = Math.max(1, Math.floor(totalPixels / 10000));
+      for (let i = 0; i < totalPixels; i += step) {
+        const v = Math.max(rBand[i] || 0, gBand[i] || 0, bBand[i] || 0);
+        if (v > maxVal && v < 65535) maxVal = v;
+      }
+      let shift = 8;
+      if (maxVal > 0 && maxVal <= 1023) shift = 2;       // 10비트
+      else if (maxVal > 0 && maxVal <= 4095) shift = 4;  // 12비트
+      else shift = 8;                                    // 16비트
+
+      for (let p = 0, j = 0; p < totalPixels; p++, j += 4) {
+        const rawR = rBand[p] || 0;
+        const rawG = gBand[p] || 0;
+        const rawB = bBand[p] || 0;
+
+        if (rawR === 0 && rawG === 0 && rawB === 0) {
+          data[j + 3] = 0;
+          continue;
+        }
+
+        data[j] = Math.min(255, Math.max(0, rawR >> shift));
+        data[j + 1] = Math.min(255, Math.max(0, rawG >> shift));
+        data[j + 2] = Math.min(255, Math.max(0, rawB >> shift));
+        data[j + 3] = 255;
+      }
+    } else {
+      // Float32 등 부동소수점 정사영상
+      let minV = Infinity, maxV = -Infinity;
+      const step = Math.max(1, Math.floor(totalPixels / 10000));
+      for (let i = 0; i < totalPixels; i += step) {
+        const v = rBand[i];
+        if (isFinite(v)) {
+          if (v < minV) minV = v;
+          if (v > maxV) maxV = v;
+        }
+      }
+      const range = (maxV - minV) || 1;
+      for (let p = 0, j = 0; p < totalPixels; p++, j += 4) {
+        const rawR = rBand[p] || 0;
+        const rawG = gBand[p] || 0;
+        const rawB = bBand[p] || 0;
+
+        if (!isFinite(rawR) || (rawR === 0 && rawG === 0 && rawB === 0)) {
+          data[j + 3] = 0;
+          continue;
+        }
+
+        data[j] = Math.min(255, Math.max(0, Math.round((rawR - minV) / range * 255)));
+        data[j + 1] = Math.min(255, Math.max(0, Math.round((rawG - minV) / range * 255)));
+        data[j + 2] = Math.min(255, Math.max(0, Math.round((rawB - minV) / range * 255)));
+        data[j + 3] = 255;
+      }
+    }
+
+    srcCtx.putImageData(imgData, 0, 0);
+
+    // 대용량 리사이즈 안전장치 (최대 2500만 화소)
+    const MAX_PX = 25e6;
+    let outW = width, outH = height;
+    if (width * height > MAX_PX) {
+      const s = Math.sqrt(MAX_PX / (width * height));
+      outW = Math.max(1, Math.round(width * s));
+      outH = Math.max(1, Math.round(height * s));
+    }
+    const outCanvas = document.createElement('canvas');
+    outCanvas.width = outW;
+    outCanvas.height = outH;
+    outCanvas.getContext('2d').drawImage(srcCanvas, 0, 0, outW, outH);
+
+    if (bbox && epsg && KOREA_PROJ4_DEFS[epsg]) {
+      placeGeoImage(outCanvas, bbox, epsg);
+    } else {
+      showBanner('지리 좌표를 인식하지 못해 일반 사진으로 불러옵니다.');
+      loadPhoto(outCanvas.toDataURL('image/png'));
+    }
+  } catch (err) {
+    console.error(err);
+    showBanner('GeoTIFF 처리 실패: ' + err.message);
+  }
+}
+
+function loadPhoto(dataURL) {
+  const img = new Image();
+  img.onload = () => {
+    state.photo = img; state.photoURL = dataURL;
+    if (state.mode !== 'photo') setMode('photo'); else { fitPhoto(); render(); }
+  };
+  img.src = dataURL;
+}
+function fitPhoto() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const s = Math.min(W / state.photo.width, H / state.photo.height) * 0.96;
+  state.view.scale = s;
+  state.view.x = -(W / s - state.photo.width) / 2;
+  state.view.y = -(H / s - state.photo.height) / 2;
+}
+
+/* 드래그 앤 드롭 */
+stage.addEventListener('dragover', e => e.preventDefault());
+stage.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f && (f.type.startsWith('image/') || isTiffFile(f))) openImageFile(f);
+});
+
+/* PNG 저장 */
+document.getElementById('btnPng').onclick = () => {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const out = document.createElement('canvas');
+  out.width = W * 2; out.height = H * 2;
+  const g = out.getContext('2d');
+  g.setTransform(2, 0, 0, 2, 0, 0);
+  drawBackground(g, W, H);
+  for (const s of state.shapes) drawShape(g, s, false);
+  
+  g.font = 'bold 11px sans-serif';
+  const stamp = (state.projName || '경비요도 제작') + ' · ' + new Date().toLocaleString('ko-KR');
+  const sw = g.measureText(stamp).width + 16;
+  g.fillStyle = 'rgba(14,20,32,.85)'; g.fillRect(8, 8, sw, 24);
+  g.fillStyle = '#FFD023'; g.fillText(stamp, 16, 24);
+  try {
+    out.toBlob(b => {
+      if (!b) { showBanner('저장에 실패했습니다.'); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = (state.projName || '경비요도 제작') + '_' + new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-') + '.png';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    }, 'image/png');
+  } catch (err) {
+    showBanner('지도 저장이 차단되었습니다. 기기 스크린샷을 이용해 주세요.');
+  }
+};
+
+/* JSON 계획 저장/열기 */
+document.getElementById('btnJson').onclick = () => {
+  const data = {
+    app: 'deployment-planner', version: 1,
+    name: state.projName,
+    mode: state.mode, view: state.view,
+    shapes: state.shapes, squadUnit: state.squadUnit, squadTeam: state.squadTeam,
+    photoURL: state.mode === 'photo' ? state.photoURL : null,
+    geoPhoto: state.geoPhoto ? {
+      dataURL: state.geoPhoto.canvas.toDataURL('image/png'),
+      wx0: state.geoPhoto.wx0, wy0: state.geoPhoto.wy0, wx1: state.geoPhoto.wx1, wy1: state.geoPhoto.wy1,
+    } : null,
+  };
+  const b = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = (state.projName || '경력배치계획') + '_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+};
+
+document.getElementById('btnOpen').onclick = () => document.getElementById('fileJson').click();
+document.getElementById('fileJson').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if (d.app !== 'deployment-planner') throw 0;
+      pushUndo();
+      state.shapes = d.shapes || [];
+      state.squadUnit = d.squadUnit || 1;
+      state.squadTeam = d.squadTeam || 1;
+      state.view = d.view || state.view;
+      state.projName = d.name || '';
+      projInput.value = state.projName;
+      document.title = state.projName ? state.projName + ' · 경비요도 제작' : '경비요도 제작';
+      if (d.photoURL) loadPhoto(d.photoURL);
+      else setMode(d.mode || 'map');
+      if (d.geoPhoto && d.geoPhoto.dataURL) {
+        const gimg = new Image();
+        gimg.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = gimg.width; c.height = gimg.height;
+          c.getContext('2d').drawImage(gimg, 0, 0);
+          state.geoPhoto = { canvas: c, wx0: d.geoPhoto.wx0, wy0: d.geoPhoto.wy0, wx1: d.geoPhoto.wx1, wy1: d.geoPhoto.wy1 };
+          document.getElementById('btnGeoClear').style.display = '';
+          document.getElementById('geoAlphaCtl').style.display = '';
+          render();
+        };
+        gimg.src = d.geoPhoto.dataURL;
+      } else {
+        state.geoPhoto = null;
+        document.getElementById('btnGeoClear').style.display = 'none';
+        document.getElementById('geoAlphaCtl').style.display = 'none';
+      }
+      render();
+    } catch { showBanner('계획 파일을 읽을 수 없습니다.'); }
+  };
+  rd.readAsText(f);
+  e.target.value = '';
+});
+
+/* ── 시작 ── */
+resize();
+setMode('map');
+syncHeader();
+syncSizeUI();
+syncBgUI();
+syncBgColorUI();
 </script>
 </body>
 </html>
