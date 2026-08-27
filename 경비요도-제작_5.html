@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>경비요도 제작</title>
+<style>
+  :root{
+    --bg:#0E1420; --panel:#16202F; --panel2:#1C2940; --line:#26354E;
+    --text:#DFE7F3; --sub:#8FA0B8; --blue:#3B7BFF; --yellow:#FFD023;
+    --red:#FF5A5F; --green:#37D3A0;
+    --mono:'SF Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden}
+  body{
+    height:100vh;height:100dvh;
+    font-family:Pretendard,'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
+    background:var(--bg);color:var(--text);
+    display:flex;flex-direction:column;
+    -webkit-user-select:none;user-select:none;
+    touch-action:none;
+  }
+
+  /* ── 헤더 ─────────────────────────── */
+  header{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);
+    flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+  }
+  header::-webkit-scrollbar{display:none}
+  .brand{display:flex;align-items:center;gap:8px;margin-right:6px;flex:none}
+  .badge{
+    width:26px;height:26px;border-radius:6px;flex:none;
+    background:repeating-linear-gradient(135deg,var(--yellow) 0 6px,#111 6px 12px);
+    border:1px solid #000;
+  }
+  .brand b{font-size:14px;letter-spacing:.06em;white-space:nowrap}
+  .brand small{display:block;font-size:10px;color:var(--sub);letter-spacing:.14em}
+  .hbtn{
+    flex:none;border:1px solid var(--line);background:var(--panel2);color:var(--text);
+    border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;white-space:nowrap;
+  }
+  .hbtn:active{transform:translateY(1px)}
+  .hbtn.warn{color:var(--red);border-color:#5a2a30}
+  .hbtn.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .hbtn:disabled{opacity:.35;cursor:default}
+  .seg{display:flex;flex:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;background:transparent;color:var(--sub);padding:7px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+  .seg button.on{background:var(--blue);color:#fff;font-weight:600}
+  select.hsel{
+    flex:none;background:var(--panel2);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:7px 8px;font-size:12px;max-width:130px;
+  }
+  .hproj{
+    flex:none;background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:7px 10px;font-size:12px;width:132px;
+  }
+  .hproj::placeholder{color:var(--sub)}
+  input,textarea{-webkit-user-select:text;user-select:text}
+
+  /* 크기·두께 조절 */
+  .sizectl{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    font-size:10px;color:var(--sub);flex:none;padding:6px 0;
+  }
+  .sizectl input[type=range]{width:66px;accent-color:var(--yellow)}
+  #sizeVal{font-family:var(--mono);color:var(--text);font-size:11px}
+
+  /* ── 본문 ─────────────────────────── */
+  #main{flex:1;display:flex;min-height:0;position:relative}
+  #stage{flex:1;position:relative;min-width:0}
+  canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;background:#1B222D}
+
+  /* ── 도구 레일 ─────────────────────── */
+  #tools{
+    display:flex;flex-direction:column;gap:6px;padding:10px 8px;
+    background:var(--panel);border-right:1px solid var(--line);
+    overflow-y:auto;width:86px;flex:none;scrollbar-width:none;
+  }
+  #tools::-webkit-scrollbar{display:none}
+  .tool{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    border:1px solid var(--line);background:var(--panel2);color:var(--text);
+    border-radius:10px;padding:8px 4px;font-size:11px;cursor:pointer;flex:none;
+  }
+  .tool .ic{font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
+  .tool .ic svg{display:block}
+  .tool.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .tdiv{height:1px;background:var(--line);margin:4px 2px;flex:none}
+  .palette{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;padding:2px 0;flex:none}
+  .sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .sw.on{border-color:#fff}
+
+  /* ── 상태 카드 ─────────────────────── */
+  #status{
+    position:absolute;right:10px;top:10px;z-index:5;
+    background:rgba(14,20,32,.88);backdrop-filter:blur(4px);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--sub);
+    pointer-events:none;min-width:150px;
+  }
+  #status b{color:var(--text);font-weight:600}
+  #status .yl{color:var(--yellow)} #status .bl{color:var(--blue)} #status .rd{color:var(--red)}
+
+  /* 플로팅 버튼/배너 */
+  #finishBar,#selBar{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:16px;z-index:6;
+    display:none;gap:8px;
+  }
+  #finishBar button,#selBar button{
+    border:0;border-radius:20px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+  #finishDone{background:var(--yellow);color:#111}
+  #finishCancel{background:var(--panel2);color:var(--text);border:1px solid var(--line)!important}
+  #selDelete{background:var(--red);color:#fff}
+  #selRename{background:var(--panel2);color:var(--text);border:1px solid var(--line)!important}
+  #banner{
+    position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:7;display:none;
+    background:#3a2b12;border:1px solid #7a5a1e;color:#ffd88a;border-radius:8px;
+    padding:8px 14px;font-size:12px;max-width:90%;text-align:center;
+  }
+  #hint{
+    position:absolute;left:10px;bottom:10px;z-index:5;pointer-events:none;
+    font-size:11px;color:var(--sub);background:rgba(14,20,32,.75);
+    border:1px solid var(--line);border-radius:8px;padding:6px 10px;max-width:60%;
+  }
+
+  /* 텍스트 입력창: 팝업 박스 없이 지도 위에 바로 쓰는 느낌 */
+  #txtBox{
+    position:absolute;z-index:8;display:none;
+  }
+  #txtBox textarea{
+    display:block;margin:0;padding:2px 4px;
+    background:transparent;border:0;outline:none;resize:none;overflow:hidden;
+    font-family:inherit;font-weight:bold;line-height:1.25;
+    min-width:24px;white-space:pre;
+    border-radius:4px;
+    box-shadow:0 0 0 1.5px rgba(55,211,160,.9);
+  }
+
+  /* ── 모바일 ────────────────────────── */
+  @media (max-width:720px), (pointer:coarse) and (max-width:1024px){
+    header{padding:8px max(12px,env(safe-area-inset-left)) 8px max(12px,env(safe-area-inset-right))}
+    .hbtn,.seg button,select.hsel{padding:10px 12px;font-size:13px}
+    #main{flex-direction:column}
+    #tools{
+      order:2;width:100%;height:auto;
+      border-right:0;border-top:1px solid var(--line);
+      display:grid;grid-template-rows:repeat(2, auto);grid-auto-flow:column;grid-auto-columns:min-content;
+      align-items:stretch;
+      overflow-x:auto;overflow-y:hidden;
+      padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    }
+    .tool{min-width:64px;padding:10px 6px;font-size:12px}
+    .tool .ic{font-size:21px}
+    .tdiv{width:1px;height:auto;grid-row:span 2;align-self:stretch;margin:2px 4px}
+    .palette{grid-row:span 2;align-self:center;flex-wrap:wrap;align-content:center;gap:6px;max-width:64px}
+    .sw{width:26px;height:26px}
+    .sizectl{grid-row:span 2;align-self:stretch;justify-content:center;flex-direction:column;gap:4px;padding:0 6px;white-space:nowrap}
+    .sizectl input[type=range]{width:70px}
+    #tools::after{
+      content:'';grid-row:span 2;position:sticky;right:0;width:18px;align-self:stretch;
+      background:linear-gradient(to right, transparent, rgba(22,32,47,.92));
+      pointer-events:none;
+    }
+    .hproj{width:120px;padding:10px}
+    #status{right:8px;top:8px;padding:7px 9px;line-height:1.7;font-size:10px;min-width:0}
+    #hint{
+      display:block;max-width:none;left:8px;right:8px;bottom:8px;
+      text-align:center;font-size:11px;
+    }
+    #finishBar,#selBar{bottom:44px}
+    #finishBar button,#selBar button{padding:12px 18px;font-size:14px}
+    .brand small{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="badge"></div>
+    <div><b>경비요도 제작</b><small>SECURITY DEPLOYMENT MAP</small></div>
+  </div>
+  <input id="projName" class="hproj" placeholder="프로젝트명 입력" maxlength="40">
+  <div class="seg">
+    <button id="modeMap" class="on">지도</button>
+    <button id="modePhoto">사진</button>
+  </div>
+  <div class="seg" id="layerSeg">
+    <button id="layerOsm" class="on">일반</button>
+    <button id="layerSat">위성</button>
+  </div>
+  <button class="hbtn" id="btnPhoto">사진 열기</button>
+  <button class="hbtn warn" id="btnGeoClear" style="display:none">배경사진 지우기</button>
+  <button class="hbtn" id="btnUndo">↩ 실행취소</button>
+  <button class="hbtn" id="btnRedo">↪</button>
+  <button class="hbtn primary" id="btnPng">PNG 저장</button>
+  <button class="hbtn" id="btnJson">계획 저장</button>
+  <button class="hbtn" id="btnOpen">계획 열기</button>
+  <button class="hbtn warn" id="btnClear">전체 삭제</button>
+  <input type="file" id="fileImg" accept="image/*,.tif,.tiff" hidden>
+  <input type="file" id="fileJson" accept=".json,application/json" hidden>
+</header>
+
+<div id="main">
+  <div id="tools">
+    <button class="tool on" data-tool="pan"><span class="ic">✋</span>이동·확대</button>
+    <button class="tool" data-tool="select"><span class="ic">🖱️</span>선택</button>
+    <div class="tdiv"></div>
+    <button class="tool" data-tool="officer"><span class="ic">
+      <svg viewBox="0 0 32 32" width="22" height="22">
+        <circle cx="16" cy="16" r="14" fill="#EEF1F5" stroke="#20242c" stroke-width="1.6"/>
+        <clipPath id="clipGen"><circle cx="16" cy="16" r="14"/></clipPath>
+        <g clip-path="url(#clipGen)">
+          <polygon points="4,32 10,19 22,19 28,32" fill="#0054A6"/>
+          <polygon points="16,19.5 14,23 18,23" fill="#1B2A41"/>
+          <circle cx="16" cy="14" r="4.4" fill="#E8B98D"/>
+          <path d="M11 12 A5 5 0 0 1 21 12 Z" fill="#1B2A41"/>
+          <ellipse cx="16" cy="12.6" rx="5.2" ry="1.4" fill="#1B2A41"/>
+          <circle cx="16" cy="11.3" r="0.9" fill="#F0B429"/>
+        </g>
+      </svg>
+    </span>일반경찰</button>
+    <button class="tool" data-tool="traffic"><span class="ic">
+      <svg viewBox="0 0 32 32" width="22" height="22">
+        <circle cx="16" cy="16" r="14" fill="#EEF1F5" stroke="#20242c" stroke-width="1.6"/>
+        <clipPath id="clipTraf"><circle cx="16" cy="16" r="14"/></clipPath>
+        <g clip-path="url(#clipTraf)">
+          <polygon points="4,32 10,19 22,19 28,32" fill="#FFFFFF" stroke="#0054A6" stroke-width="1.2"/>
+          <polygon points="16,19.5 14,23 18,23" fill="#1B2A41"/>
+          <circle cx="16" cy="14" r="4.4" fill="#E8B98D"/>
+          <path d="M11 12 A5 5 0 0 1 21 12 Z" fill="#1B2A41"/>
+          <ellipse cx="16" cy="12.6" rx="5.2" ry="1.4" fill="#1B2A41"/>
+          <circle cx="16" cy="11.3" r="0.9" fill="#F0B429"/>
+        </g>
+      </svg>
+    </span>교통경찰</button>
+    <button class="tool" data-tool="squad"><span class="ic">🛡️</span>부대</button>
+    <div class="tdiv"></div>
+    <button class="tool" data-tool="policeline"><span class="ic">🚧</span>질서유지선</button>
+    <button class="tool" data-tool="bus"><span class="ic">🚌</span>경찰버스</button>
+    <div class="tdiv"></div>
+    <button class="tool" data-tool="arrow"><span class="ic">➡️</span>동선</button>
+    <button class="tool" data-tool="pen"><span class="ic">／</span>직선</button>
+    <button class="tool" data-tool="measureLine"><span class="ic">📏</span>거리측정</button>
+    <button class="tool" data-tool="measureArea"><span class="ic">📐</span>면적측정</button>
+    <button class="tool" data-tool="text"><span class="ic">🅣</span>텍스트</button>
+    <button class="tool" data-tool="erase"><span class="ic">🧽</span>지우개</button>
+    <div class="tdiv"></div>
+    <div class="palette" id="palette"></div>
+    <div class="tdiv"></div>
+    <div class="sizectl">
+      <span>크기·두께</span>
+      <input type="range" id="sizeRange" min="0.5" max="3" step="0.1" value="1">
+      <span id="sizeVal">×1.0</span>
+    </div>
+    <div class="sizectl">
+      <span>글자 배경</span>
+      <input type="range" id="bgRange" min="0" max="1" step="0.05" value="0.55">
+      <span id="bgVal">55%</span>
+    </div>
+    <div class="sizectl">
+      <span>배경색</span>
+      <div class="palette" id="bgPalette"></div>
+    </div>
+  </div>
+
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="status"></div>
+    <div id="hint">✋ 드래그로 이동, 휠/두 손가락으로 확대·축소</div>
+    <div id="banner"></div>
+    <div id="finishBar">
+      <button id="finishDone">선 완료</button>
+      <button id="finishCancel">취소</button>
+    </div>
+    <div id="selBar">
+      <button id="selRename">이름 변경</button>
+      <button id="selDelete">삭제</button>
+    </div>
+    <div id="txtBox">
+      <textarea id="txtInput" rows="1"></textarea>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.21.0/dist/proj4.js"></script>
+<script>
+"use strict";
+/* ────────────────────────────────────────────
+   좌표계
+   - world: 지도 모드 = 웹메르카토르 zoom0 픽셀(0~256)
+            사진 모드 = 이미지 픽셀
+   - screen = (world - view.x|y) * view.scale
+──────────────────────────────────────────── */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const stage = document.getElementById('stage');
+let DPR = Math.max(1, window.devicePixelRatio || 1);
+
+const state = {
+  mode: 'map',                       // 'map' | 'photo'
+  baseLayer: 'osm',                  // 'osm' | 'sat'
+  view: { x: 0, y: 0, scale: 1 },
+  shapes: [],
+  tool: 'pan',
+  color: '#FF5A5F',
+  selected: -1,
+  draft: null,                       // 작성 중인 선 {kind, pts:[]}
+  photo: null,                       // HTMLImageElement
+  photoURL: null,                    // dataURL (저장용)
+  geoPhoto: null,                    // {canvas, wx0,wy0,wx1,wy1} — GeoTIFF 좌표 정합 오버레이(지도 모드)
+  squadUnit: 1, squadTeam: 1, officerNo: 0,
+  size: 1,                           // 새 도형 기본 크기·두께 배율
+  textBg: 0.55,                      // 새 텍스트 기본 배경 투명도(0=투명,1=불투명)
+  textBgColor: '#000000',            // 새 텍스트 기본 배경색
+  projName: '',
+};
+const undoStack = [], redoStack = [];
+
+/* ── 지도 타일 ── */
+const TILE = 256, MINZ = 3, MAXZ = 19;
+const TILE_SOURCES = {
+  osm: {
+    url: (z, x, y) => 'https://tile.openstreetmap.org/' + z + '/' + x + '/' + y + '.png',
+    attrib: '© OpenStreetMap contributors',
+  },
+  sat: {
+    // Esri World Imagery: 무료, 회원가입/키 불필요 (URL 순서가 z/y/x 인 점에 유의)
+    url: (z, x, y) => 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' + z + '/' + y + '/' + x,
+    attrib: '© Esri, Maxar, Earthstar Geographics',
+  },
+};
+const tileCache = new Map();
+let tileFails = 0;
+function tileImg(z, x, y) {
+  const n = 1 << z;
+  x = ((x % n) + n) % n;
+  if (y < 0 || y >= n) return null;
+  const src = TILE_SOURCES[state.baseLayer] || TILE_SOURCES.osm;
+  const key = state.baseLayer + '/' + z + '/' + x + '/' + y;
+  let t = tileCache.get(key);
+  if (!t) {
+    t = { img: new Image(), ok: false, err: false };
+    t.img.crossOrigin = 'anonymous';
+    t.img.onload = () => { t.ok = true; render(); };
+    t.img.onerror = () => { t.err = true; if (++tileFails === 6) showBanner('지도 타일을 불러올 수 없습니다. 네트워크 확인 또는 [사진] 모드로 지도 캡처 이미지를 사용해 보세요.'); };
+    t.img.src = src.url(z, x, y);
+    if (tileCache.size > 500) tileCache.delete(tileCache.keys().next().value);
+    tileCache.set(key, t);
+  }
+  return t;
+}
+function lonLatToWorld(lon, lat) {
+  const x = (lon + 180) / 360 * TILE;
+  const s = Math.sin(lat * Math.PI / 180);
+  const y = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * TILE;
+  return { x, y };
+}
+function worldToLat(y) {
+  const n = Math.PI - 2 * Math.PI * y / TILE;
+  return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+}
+/* world 1단위 = 지구둘레/256 (적도 기준) → 위도 보정 */
+function metersPerWorld() {
+  if (state.mode !== 'map') return 0;
+  const midY = state.view.y + (stage.clientHeight / 2) / state.view.scale;
+  return 40075016.686 / TILE * Math.cos(worldToLat(midY) * Math.PI / 180);
+}
+
+/* ── 변환 ── */
+const w2sX = wx => (wx - state.view.x) * state.view.scale;
+const w2sY = wy => (wy - state.view.y) * state.view.scale;
+const s2wX = sx => sx / state.view.scale + state.view.x;
+const s2wY = sy => sy / state.view.scale + state.view.y;
+
+function setMapView(lon, lat, z) {
+  const w = lonLatToWorld(lon, lat);
+  state.view.scale = Math.pow(2, z);
+  state.view.x = w.x - (stage.clientWidth / 2) / state.view.scale;
+  state.view.y = w.y - (stage.clientHeight / 2) / state.view.scale;
+}
+function zoomAt(sx, sy, factor) {
+  const min = state.mode === 'map' ? Math.pow(2, MINZ) : 0.02;
+  const max = state.mode === 'map' ? Math.pow(2, MAXZ + 0.99) : 60;
+  const ns = Math.min(max, Math.max(min, state.view.scale * factor));
+  const wx = s2wX(sx), wy = s2wY(sy);
+  state.view.scale = ns;
+  state.view.x = wx - sx / ns;
+  state.view.y = wy - sy / ns;
+}
+
+/* ── 실행취소 ── */
+function pushUndo() {
+  undoStack.push(JSON.stringify(state.shapes));
+  if (undoStack.length > 60) undoStack.shift();
+  redoStack.length = 0;
+  syncHeader();
+}
+function undo() {
+  if (!undoStack.length) return;
+  redoStack.push(JSON.stringify(state.shapes));
+  state.shapes = JSON.parse(undoStack.pop());
+  state.selected = -1; hideSelBar(); render(); syncHeader();
+}
+function redo() {
+  if (!redoStack.length) return;
+  undoStack.push(JSON.stringify(state.shapes));
+  state.shapes = JSON.parse(redoStack.pop());
+  state.selected = -1; hideSelBar(); render(); syncHeader();
+}
+
+/* ── 렌더링 ── */
+function resize() {
+  DPR = Math.max(1, window.devicePixelRatio || 1);
+  cv.width = stage.clientWidth * DPR;
+  cv.height = stage.clientHeight * DPR;
+  render();
+}
+window.addEventListener('resize', resize);
+
+function render() {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const W = stage.clientWidth, H = stage.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+  drawBackground(ctx, W, H);
+  for (let i = 0; i < state.shapes.length; i++) drawShape(ctx, state.shapes[i], i === state.selected);
+  if (state.draft) drawDraft(ctx);
+  updateStatus();
+}
+
+function drawBackground(g, W, H) {
+  if (state.mode === 'photo') {
+    g.fillStyle = '#1B222D'; g.fillRect(0, 0, W, H);
+    if (state.photo) {
+      g.imageSmoothingEnabled = true;
+      g.drawImage(state.photo, w2sX(0), w2sY(0),
+        state.photo.width * state.view.scale, state.photo.height * state.view.scale);
+    } else {
+      g.fillStyle = '#5b6b83'; g.font = '14px sans-serif'; g.textAlign = 'center';
+      g.fillText('상단 [사진 열기]로 현장 사진·지도 캡처를 불러오세요', W / 2, H / 2);
+      g.textAlign = 'left';
+    }
+    return;
+  }
+  // 지도 타일
+  g.fillStyle = '#DDE3E9'; g.fillRect(0, 0, W, H);
+  let z = Math.round(Math.log2(state.view.scale));
+  z = Math.min(MAXZ, Math.max(MINZ, z));
+  const f = state.view.scale / Math.pow(2, z);   // 화면상 타일 배율
+  const wPerTile = TILE / Math.pow(2, z);        // 타일 1장의 world 크기
+  const x0 = Math.floor(state.view.x / wPerTile);
+  const y0 = Math.floor(state.view.y / wPerTile);
+  const x1 = Math.floor((state.view.x + W / state.view.scale) / wPerTile);
+  const y1 = Math.floor((state.view.y + H / state.view.scale) / wPerTile);
+  for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+    const t = tileImg(z, tx, ty);
+    if (t && t.ok) {
+      g.drawImage(t.img,
+        Math.floor(w2sX(tx * wPerTile)), Math.floor(w2sY(ty * wPerTile)),
+        Math.ceil(TILE * f) + 1, Math.ceil(TILE * f) + 1);
+    }
+  }
+  if (state.geoPhoto) {
+    const gp = state.geoPhoto;
+    const sx0 = w2sX(gp.wx0), sy0 = w2sY(gp.wy0), sx1 = w2sX(gp.wx1), sy1 = w2sY(gp.wy1);
+    g.drawImage(gp.canvas, sx0, sy0, sx1 - sx0, sy1 - sy0);
+  }
+  g.fillStyle = 'rgba(0,0,0,.45)'; g.font = '10px sans-serif';
+  g.fillText((TILE_SOURCES[state.baseLayer] || TILE_SOURCES.osm).attrib, 6, H - 6);
+}
+
+/* ── 도형 그리기 ── */
+function pathPts(g, pts) {
+  g.beginPath();
+  g.moveTo(w2sX(pts[0].x), w2sY(pts[0].y));
+  for (let i = 1; i < pts.length; i++) g.lineTo(w2sX(pts[i].x), w2sY(pts[i].y));
+}
+function drawTape(g, pts, k) {           /* 질서유지선: 노랑+검정 테이프 */
+  k = k || 1;
+  g.lineCap = 'butt'; g.lineJoin = 'round';
+  pathPts(g, pts);
+  g.strokeStyle = '#111'; g.lineWidth = 14 * k; g.setLineDash([]); g.stroke();
+  pathPts(g, pts);
+  g.strokeStyle = '#FFD023'; g.lineWidth = 10 * k; g.stroke();
+  pathPts(g, pts);
+  g.strokeStyle = '#111'; g.lineWidth = 10 * k; g.setLineDash([9 * k, 9 * k]); g.stroke();
+  g.setLineDash([]);
+  labelAtMid(g, pts, '질서유지선', '#FFD023', '#111', k);
+}
+function drawBarrier(g, pts, k) {        /* 경찰버스 */
+  k = k || 1;
+  g.lineCap = 'butt'; g.lineJoin = 'round';
+  pathPts(g, pts);
+  g.strokeStyle = '#2A2F36'; g.lineWidth = 16 * k; g.setLineDash([]); g.stroke();
+  pathPts(g, pts);
+  g.strokeStyle = '#8f9aa8'; g.lineWidth = 3 * k; g.setLineDash([14 * k, 10 * k]); g.stroke();
+  g.setLineDash([]);
+  labelAtMid(g, pts, '경찰버스', '#2A2F36', '#fff', k);
+}
+function labelAtMid(g, pts, text, bg, fg, k) {
+  k = Math.max(1, k || 1);
+  const m = pts[Math.floor((pts.length - 1) / 2)];
+  const n = pts[Math.min(pts.length - 1, Math.floor((pts.length - 1) / 2) + 1)];
+  const x = (w2sX(m.x) + w2sX(n.x)) / 2, y = (w2sY(m.y) + w2sY(n.y)) / 2;
+  g.font = 'bold ' + (10 * k) + 'px sans-serif';
+  const w = g.measureText(text).width + 10 * k, h = 15 * k, off = 20 * k;
+  g.fillStyle = bg; g.fillRect(x - w / 2, y - off, w, h);
+  g.strokeStyle = '#111'; g.lineWidth = 1; g.strokeRect(x - w / 2, y - off, w, h);
+  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, x, y - off + h / 2);
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+function drawArrowShape(g, a, b, color, k) {
+  k = k || 1;
+  const ax = w2sX(a.x), ay = w2sY(a.y), bx = w2sX(b.x), by = w2sY(b.y);
+  const ang = Math.atan2(by - ay, bx - ax);
+  const hd = Math.max(9, 14 * k);
+  g.strokeStyle = color; g.fillStyle = color; g.lineWidth = 4 * k; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(ax, ay); g.lineTo(bx, by); g.stroke();
+  g.beginPath();
+  g.moveTo(bx, by);
+  g.lineTo(bx - hd * Math.cos(ang - 0.45), by - hd * Math.sin(ang - 0.45));
+  g.lineTo(bx - hd * Math.cos(ang + 0.45), by - hd * Math.sin(ang + 0.45));
+  g.closePath(); g.fill();
+}
+/* 경찰관 실루엣: 모자·얼굴은 공통, 제복 색상만 소속에 따라 다르게 */
+function drawPoliceBust(g, x, y, r, uniformFill, uniformStroke) {
+  g.save();
+  g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
+  g.fillStyle = '#EEF1F5'; g.fill();
+  g.lineWidth = Math.max(1, r * 0.1); g.strokeStyle = '#20242c'; g.stroke();
+  g.clip();
+
+  const shTop = y + r * 0.05, shBottom = y + r * 1.15;
+  g.beginPath();
+  g.moveTo(x - r * 0.88, shBottom);
+  g.lineTo(x - r * 0.46, shTop);
+  g.lineTo(x + r * 0.46, shTop);
+  g.lineTo(x + r * 0.88, shBottom);
+  g.closePath();
+  g.fillStyle = uniformFill; g.fill();
+  if (uniformStroke) { g.lineWidth = Math.max(1, r * 0.09); g.strokeStyle = uniformStroke; g.stroke(); }
+
+  g.beginPath();
+  g.moveTo(x, shTop + r * 0.08);
+  g.lineTo(x - r * 0.13, shTop + r * 0.4);
+  g.lineTo(x + r * 0.13, shTop + r * 0.4);
+  g.closePath();
+  g.fillStyle = '#1B2A41'; g.fill();
+
+  g.beginPath(); g.arc(x, y - r * 0.3, r * 0.4, 0, Math.PI * 2);
+  g.fillStyle = '#E8B98D'; g.fill();
+
+  g.beginPath(); g.arc(x, y - r * 0.56, r * 0.43, Math.PI, 0);
+  g.fillStyle = '#1B2A41'; g.fill();
+  g.beginPath(); g.ellipse(x, y - r * 0.42, r * 0.47, r * 0.12, 0, 0, Math.PI * 2);
+  g.fillStyle = '#1B2A41'; g.fill();
+  g.beginPath(); g.arc(x, y - r * 0.5, r * 0.08, 0, Math.PI * 2);
+  g.fillStyle = '#FFD023'; g.fill();
+  g.restore();
+}
+function drawBus(g, s, sel) {
+  const k = s.sz || 1;
+  const x = w2sX(s.x), y = w2sY(s.y);
+  const w = 58 * k, h = 24 * k;
+  const left = x - w / 2, top = y - h / 2;
+  const wheelR = h * 0.22;
+
+  // 차체(흰색, 둥근 모서리)
+  roundRect(g, left, top, w, h, 4 * k);
+  g.fillStyle = '#F4F6F8'; g.fill();
+
+  g.save();
+  roundRect(g, left, top, w, h, 4 * k); g.clip();
+
+  // 창문 띠(짙은 청색) + 세로 창틀
+  const winTop = top + h * 0.12, winH = h * 0.42, winL = left + w * 0.06, winW = w * 0.60;
+  g.fillStyle = '#173A63';
+  g.fillRect(winL, winTop, winW, winH);
+  g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = Math.max(0.6, 0.9 * k);
+  for (let i = 1; i < 4; i++) {
+    const wx = winL + winW * (i / 4);
+    g.beginPath(); g.moveTo(wx, winTop); g.lineTo(wx, winTop + winH); g.stroke();
+  }
+  // 앞유리(전면부, 약간 밝은 톤)
+  g.fillStyle = '#20456f';
+  g.fillRect(left + w * 0.70, winTop, w * 0.13, winH);
+
+  // 파란 벨트라인
+  const beltTop = winTop + winH + h * 0.02, beltH = h * 0.13;
+  g.fillStyle = '#0D4EA6';
+  g.fillRect(left, beltTop, w, beltH);
+  // 금색 라인
+  g.fillStyle = '#F0B429';
+  g.fillRect(left, beltTop + beltH, w, Math.max(1, h * 0.035));
+
+  // POLICE 문구
+  g.fillStyle = '#0D4EA6';
+  g.font = 'bold ' + Math.max(5, 6.2 * k) + 'px sans-serif';
+  g.textAlign = 'left'; g.textBaseline = 'middle';
+  g.fillText('POLICE', left + w * 0.40, top + h * 0.85);
+
+  // 엠블럼(금색 배지)
+  g.beginPath(); g.arc(left + w * 0.16, top + h * 0.83, h * 0.13, 0, Math.PI * 2);
+  g.fillStyle = '#F0B429'; g.fill();
+  g.lineWidth = Math.max(0.5, 0.6 * k); g.strokeStyle = '#0D4EA6'; g.stroke();
+  g.restore();
+
+  // 차체 외곽선
+  roundRect(g, left, top, w, h, 4 * k);
+  g.lineWidth = Math.max(1, 1.4 * k); g.strokeStyle = '#1B2A41'; g.stroke();
+
+  // 바퀴
+  g.fillStyle = '#111';
+  g.beginPath(); g.arc(left + w * 0.22, top + h, wheelR, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(left + w * 0.78, top + h, wheelR, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#999';
+  g.beginPath(); g.arc(left + w * 0.22, top + h, wheelR * 0.42, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(left + w * 0.78, top + h, wheelR * 0.42, 0, Math.PI * 2); g.fill();
+
+  const bottomY = top + h + wheelR;
+  if (s.label) {
+    g.font = 'bold ' + (10 * Math.max(1, k)) + 'px sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    g.fillStyle = '#2A2F36';
+    g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 3;
+    g.strokeText(s.label, x, bottomY + 12 * k); g.fillText(s.label, x, bottomY + 12 * k);
+  }
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+
+  if (sel) {
+    g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.setLineDash([5, 4]);
+    g.strokeRect(left - 6, top - 6, w + 12, (bottomY - top) + 12);
+    g.setLineDash([]);
+  }
+}
+function drawOfficer(g, s, sel) {
+  const k = s.sz || 1;
+  const isTraffic = s.ptype === 'traffic';
+  const x = w2sX(s.x), y = w2sY(s.y);
+  const r = 15 * k;
+  drawPoliceBust(g, x, y, r, isTraffic ? '#FFFFFF' : '#0054A6', isTraffic ? '#0054A6' : null);
+  const tag = isTraffic ? '교통' : '경찰';
+  g.font = 'bold ' + (9 * Math.max(1, k)) + 'px sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  g.fillStyle = '#0054A6';
+  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 3;
+  const under = s.label ? (tag + ' ' + s.label) : tag;
+  g.strokeText(under, x, y + 27 * k); g.fillText(under, x, y + 27 * k);
+  g.textAlign = 'left';
+  if (sel) selRing(g, x, y, 20 * k);
+}
+function drawSquad(g, s, sel) {
+  const k = s.sz || 1;
+  const x = w2sX(s.x), y = w2sY(s.y);
+  g.font = 'bold ' + (12 * k) + 'px sans-serif';
+  const w = Math.max(56 * k, g.measureText(s.label).width + 22 * k);
+  const h = 28 * k;
+  g.fillStyle = '#0054A6';
+  g.strokeStyle = '#fff'; g.lineWidth = 2 * k;
+  roundRect(g, x - w / 2, y - h / 2, w, h, 7 * k); g.fill(); g.stroke();
+  // 부대 기호(NATO식 사선)
+  g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1.5 * k;
+  g.beginPath(); g.moveTo(x - w / 2 + 4 * k, y + h / 2 - 4 * k); g.lineTo(x - w / 2 + 16 * k, y - h / 2 + 4 * k); g.stroke();
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(s.label, x + 5 * k, y + 0.5);
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  if (sel) selRing(g, x, y, Math.max(w / 2, 20 * k) + 6);
+}
+function roundRect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+function hexToRgba(hex, a) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = parseInt(hex.substr(0, 2), 16), g2 = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
+  return 'rgba(' + r + ',' + g2 + ',' + b + ',' + a + ')';
+}
+function textLines(s) { return (s.text || '').split('\n'); }
+function drawTextShape(g, s, sel) {
+  const k = s.sz || 1;
+  const x = w2sX(s.x), y = w2sY(s.y);
+  const fontPx = 14 * k, lineH = fontPx * 1.25;
+  g.font = 'bold ' + fontPx + 'px sans-serif';
+  const lines = textLines(s);
+  let w = 0;
+  for (const line of lines) w = Math.max(w, g.measureText(line).width);
+  const padX = 8 * k, padTop = 16 * k, padBot = 6 * k;
+  const bw = w + padX * 2, bh = padTop + padBot + lineH * (lines.length - 1);
+  const bx = x - padX, by = y - padTop;
+  const alpha = s.bg != null ? s.bg : 0.55;
+  if (alpha > 0.01) {
+    roundRect(g, bx, by, bw, bh, 5 * k);
+    g.fillStyle = hexToRgba(s.bgColor || '#000000', alpha); g.fill();
+  }
+  g.fillStyle = s.color; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  lines.forEach((line, i) => g.fillText(line, x, y + i * lineH));
+  if (sel) {
+    g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.setLineDash([4, 4]);
+    g.strokeRect(bx, by, bw, bh); g.setLineDash([]);
+    // 우하단 크기조절 핸들 (전체 박스 기준)
+    const hx = bx + bw + 4, hy = by + bh - 6;
+    g.fillStyle = '#37D3A0';
+    g.beginPath(); g.arc(hx, hy, 8, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#0E1420'; g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(hx - 3.5, hy + 3.5); g.lineTo(hx + 3.5, hy - 3.5);
+    g.moveTo(hx + 0.5, hy - 3.5); g.lineTo(hx + 3.5, hy - 3.5); g.lineTo(hx + 3.5, hy - 0.5);
+    g.moveTo(hx - 0.5, hy + 3.5); g.lineTo(hx - 3.5, hy + 3.5); g.lineTo(hx - 3.5, hy + 0.5);
+    g.stroke();
+  }
+}
+/* 선택된 텍스트의 크기조절 핸들 위치(전체 박스 우하단) */
+function textHandlePos(s) {
+  const k = s.sz || 1;
+  const fontPx = 14 * k, lineH = fontPx * 1.25;
+  ctx.font = 'bold ' + fontPx + 'px sans-serif';
+  const lines = textLines(s);
+  let w = 0;
+  for (const line of lines) w = Math.max(w, ctx.measureText(line).width);
+  const padX = 8 * k, padTop = 16 * k, padBot = 6 * k;
+  const bh = padTop + padBot + lineH * (lines.length - 1);
+  const bx = w2sX(s.x) - padX, by = w2sY(s.y) - padTop;
+  return { x: bx + w + padX * 2 + 4, y: by + bh - 6 };
+}
+function selRing(g, x, y, r) {
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 2; g.setLineDash([5, 4]);
+  g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+}
+function outlinePts(g, pts) {
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.setLineDash([5, 4]);
+  pathPts(g, pts); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#37D3A0';
+  for (const p of pts) { g.beginPath(); g.arc(w2sX(p.x), w2sY(p.y), 4, 0, Math.PI * 2); g.fill(); }
+}
+/* ── 거리·면적 측정 ── */
+function polyLength(pts) {
+  let L = 0;
+  for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  return L;
+}
+function polygonArea(pts) {
+  let a = 0; const n = pts.length;
+  for (let i = 0; i < n; i++) { const p1 = pts[i], p2 = pts[(i + 1) % n]; a += p1.x * p2.y - p2.x * p1.y; }
+  return Math.abs(a) / 2;
+}
+function polygonCentroid(pts) {
+  let x = 0, y = 0;
+  for (const p of pts) { x += p.x; y += p.y; }
+  return { x: x / pts.length, y: y / pts.length };
+}
+function fmtMeasureLen(worldLen) {
+  if (state.mode === 'map') {
+    const m = worldLen * metersPerWorld();
+    return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : Math.round(m).toLocaleString() + ' m';
+  }
+  return Math.round(worldLen).toLocaleString() + ' px';
+}
+function fmtMeasureArea(worldArea) {
+  if (state.mode === 'map') {
+    const mpw = metersPerWorld(), m2 = worldArea * mpw * mpw;
+    if (m2 >= 1e6) return (m2 / 1e6).toFixed(2) + ' km²';
+    if (m2 >= 10000) return (m2 / 10000).toFixed(2) + ' ha';
+    return Math.round(m2).toLocaleString() + ' m²';
+  }
+  return Math.round(worldArea).toLocaleString() + ' px²';
+}
+function drawMeasureLabel(g, x, y, text) {
+  g.font = 'bold 11px sans-serif';
+  const w = g.measureText(text).width + 12, h = 19;
+  roundRect(g, x - w / 2, y - h / 2, w, h, 4);
+  g.fillStyle = 'rgba(14,20,32,.9)'; g.fill();
+  roundRect(g, x - w / 2, y - h / 2, w, h, 4);
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 1; g.stroke();
+  g.fillStyle = '#37D3A0'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, x, y + 0.5);
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+function drawMeasureLine(g, pts, sel) {
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 2.4; g.lineCap = 'round'; g.lineJoin = 'round'; g.setLineDash([8, 5]);
+  pathPts(g, pts); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#37D3A0';
+  for (const p of pts) { g.beginPath(); g.arc(w2sX(p.x), w2sY(p.y), 3.5, 0, Math.PI * 2); g.fill(); }
+  const last = pts[pts.length - 1];
+  drawMeasureLabel(g, w2sX(last.x), w2sY(last.y) - 16, fmtMeasureLen(polyLength(pts)));
+  if (sel) drawHandles(g, pts, true);
+}
+function drawMeasureArea(g, pts, sel) {
+  if (pts.length < 2) return;
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 2.2; g.setLineDash([8, 5]);
+  if (pts.length >= 3) {
+    pathPts(g, pts);
+    g.lineTo(w2sX(pts[0].x), w2sY(pts[0].y));
+    g.closePath();
+    g.fillStyle = 'rgba(55,211,160,0.16)'; g.fill();
+    g.stroke();
+  } else { pathPts(g, pts); g.stroke(); }
+  g.setLineDash([]);
+  g.fillStyle = '#37D3A0';
+  for (const p of pts) { g.beginPath(); g.arc(w2sX(p.x), w2sY(p.y), 3.5, 0, Math.PI * 2); g.fill(); }
+  if (pts.length >= 3) {
+    const c = polygonCentroid(pts);
+    drawMeasureLabel(g, w2sX(c.x), w2sY(c.y), fmtMeasureArea(polygonArea(pts)));
+  }
+  if (sel) drawHandles(g, pts, true);
+}
+function pointInPolyScreen(sx, sy, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = w2sX(pts[i].x), yi = w2sY(pts[i].y);
+    const xj = w2sX(pts[j].x), yj = w2sY(pts[j].y);
+    const hit = ((yi > sy) !== (yj > sy)) && (sx < (xj - xi) * (sy - yi) / (yj - yi) + xi);
+    if (hit) inside = !inside;
+  }
+  return inside;
+}
+/* 편집 핸들: ● 꼭지점(드래그 이동), ＋ 중간점(드래그로 꺾인점 추가) */
+const HANDLE_R = 9, HANDLE_HIT = 22;
+function drawHandles(g, pts, withMid) {
+  g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.setLineDash([5, 4]);
+  pathPts(g, pts); g.stroke(); g.setLineDash([]);
+  if (withMid) {
+    for (let i = 1; i < pts.length; i++) {
+      const mx = (w2sX(pts[i-1].x) + w2sX(pts[i].x)) / 2;
+      const my = (w2sY(pts[i-1].y) + w2sY(pts[i].y)) / 2;
+      g.beginPath(); g.arc(mx, my, HANDLE_R - 2, 0, Math.PI * 2);
+      g.fillStyle = 'rgba(22,32,47,.9)'; g.fill();
+      g.strokeStyle = '#37D3A0'; g.lineWidth = 1.5; g.stroke();
+      g.strokeStyle = '#37D3A0'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(mx - 4, my); g.lineTo(mx + 4, my);
+      g.moveTo(mx, my - 4); g.lineTo(mx, my + 4); g.stroke();
+    }
+  }
+  for (const p of pts) {
+    const x = w2sX(p.x), y = w2sY(p.y);
+    g.beginPath(); g.arc(x, y, HANDLE_R, 0, Math.PI * 2);
+    g.fillStyle = '#fff'; g.fill();
+    g.lineWidth = 3; g.strokeStyle = '#37D3A0'; g.stroke();
+  }
+}
+function editablePts(s) {
+  if (!s) return null;
+  if (s.type === 'line' || s.type === 'arrow' || s.type === 'pen' || s.type === 'measure_line' || s.type === 'measure_area') return s.pts;
+  return null;
+}
+/* 선택된 도형의 핸들 히트 테스트 → {kind:'v'|'m', idx} */
+function handleAt(sx, sy) {
+  if (state.selected < 0) return null;
+  const s = state.shapes[state.selected];
+  const pts = editablePts(s);
+  if (!pts) return null;
+  for (let i = 0; i < pts.length; i++) {
+    if (Math.hypot(sx - w2sX(pts[i].x), sy - w2sY(pts[i].y)) < HANDLE_HIT) return { kind: 'v', idx: i };
+  }
+  if (s.type === 'line' || s.type === 'pen' || s.type === 'measure_line' || s.type === 'measure_area') {
+    for (let i = 1; i < pts.length; i++) {
+      const mx = (w2sX(pts[i-1].x) + w2sX(pts[i].x)) / 2;
+      const my = (w2sY(pts[i-1].y) + w2sY(pts[i].y)) / 2;
+      if (Math.hypot(sx - mx, sy - my) < HANDLE_HIT) return { kind: 'm', idx: i };
+    }
+  }
+  return null;
+}
+function drawShape(g, s, sel) {
+  switch (s.type) {
+    case 'officer': drawOfficer(g, s, sel); break;
+    case 'squad':   drawSquad(g, s, sel); break;
+    case 'bus':     drawBus(g, s, sel); break;
+    case 'line':
+      s.kind === 'barrier' ? drawBarrier(g, s.pts, s.w) : drawTape(g, s.pts, s.w);
+      if (sel) drawHandles(g, s.pts, true);
+      break;
+    case 'arrow':
+      drawArrowShape(g, s.pts[0], s.pts[1], s.color, s.w);
+      if (sel) drawHandles(g, s.pts, false);
+      break;
+    case 'pen':
+      g.strokeStyle = s.color; g.lineWidth = 4 * (s.w || 1); g.lineCap = 'round'; g.lineJoin = 'round';
+      pathPts(g, s.pts); g.stroke();
+      if (sel) drawHandles(g, s.pts, true);
+      break;
+    case 'measure_line': drawMeasureLine(g, s.pts, sel); break;
+    case 'measure_area': drawMeasureArea(g, s.pts, sel); break;
+    case 'text':    drawTextShape(g, s, sel); break;
+  }
+}
+function drawDraft(g) {
+  const d = state.draft;
+  if (d.pts.length === 0) return;
+  const pts = d.cursor ? d.pts.concat([d.cursor]) : d.pts;
+  if (d.kind === 'measureLine') { if (pts.length >= 2) drawMeasureLine(g, pts, false); }
+  else if (d.kind === 'measureArea') { if (pts.length >= 2) drawMeasureArea(g, pts, false); }
+  else if (pts.length >= 2) {
+    if (d.kind === 'barrier') drawBarrier(g, pts, state.size);
+    else if (d.kind === 'pen') {
+      g.strokeStyle = state.color; g.lineWidth = 4 * state.size; g.lineCap = 'round'; g.lineJoin = 'round';
+      pathPts(g, pts); g.stroke();
+    } else drawTape(g, pts, state.size);
+  }
+  g.fillStyle = '#fff'; g.strokeStyle = '#111';
+  for (const p of d.pts) {
+    g.beginPath(); g.arc(w2sX(p.x), w2sY(p.y), 5, 0, Math.PI * 2); g.fill(); g.stroke();
+  }
+}
+
+/* ── 상태 카드 ── */
+function updateStatus() {
+  let genOff = 0, trafOff = 0, squads = 0, buses = 0, lineLen = 0, barrierLen = 0;
+  const mpw = metersPerWorld();
+  for (const s of state.shapes) {
+    if (s.type === 'officer') { s.ptype === 'traffic' ? trafOff++ : genOff++; }
+    else if (s.type === 'squad') squads++;
+    else if (s.type === 'bus') buses++;
+    else if (s.type === 'line') {
+      let L = 0;
+      for (let i = 1; i < s.pts.length; i++)
+        L += Math.hypot(s.pts[i].x - s.pts[i - 1].x, s.pts[i].y - s.pts[i - 1].y);
+      s.kind === 'barrier' ? barrierLen += L : lineLen += L;
+    }
+  }
+  const fmt = L => state.mode === 'map'
+    ? Math.round(L * mpw).toLocaleString() + ' m'
+    : Math.round(L) + ' px';
+  document.getElementById('status').innerHTML =
+    '<span class="bl">●</span> 일반경찰 <b>' + genOff + '명</b><br>' +
+    '<span style="color:#fff;-webkit-text-stroke:1px #0054A6">●</span> 교통경찰 <b>' + trafOff + '명</b><br>' +
+    '<span class="bl">■</span> 부대 <b>' + squads + '개</b><br>' +
+    '<span style="color:#2A2F36;-webkit-text-stroke:1px #fff">■</span> 경찰버스 <b>' + buses + '대</b><br>' +
+    '<span class="yl">▬</span> 질서유지선 <b>' + fmt(lineLen) + '</b>';
+}
+
+/* ── 히트 테스트 ── */
+function distToSeg(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  let t = len2 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+function hitTest(sx, sy) {
+  for (let i = state.shapes.length - 1; i >= 0; i--) {
+    const s = state.shapes[i];
+    if (s.type === 'measure_area' && s.pts.length >= 3 && pointInPolyScreen(sx, sy, s.pts)) return i;
+    if (s.type === 'officer' || s.type === 'squad' || s.type === 'bus') {
+      const k = s.sz || 1;
+      const r = s.type === 'squad' ? 36 * k : (s.type === 'bus' ? 34 * k : 20 * k);
+      if (Math.hypot(sx - w2sX(s.x), sy - w2sY(s.y)) < r) return i;
+    } else if (s.type === 'text') {
+      const k = s.sz || 1;
+      const fontPx = 14 * k, lineH = fontPx * 1.25;
+      ctx.font = 'bold ' + fontPx + 'px sans-serif';
+      const lines = textLines(s);
+      let w = 0;
+      for (const line of lines) w = Math.max(w, ctx.measureText(line).width);
+      const bh = 16 * k + 6 * k + lineH * (lines.length - 1);
+      const x = w2sX(s.x), y = w2sY(s.y);
+      if (sx >= x - 8 * k && sx <= x + w + 8 * k && sy >= y - 16 * k && sy <= y - 16 * k + bh) return i;
+    } else {
+      const tol = Math.max(12, 8 * (s.w || 1) + 4);
+      const pts = s.pts;
+      for (let j = 1; j < pts.length; j++) {
+        if (distToSeg(sx, sy, w2sX(pts[j-1].x), w2sY(pts[j-1].y), w2sX(pts[j].x), w2sY(pts[j].y)) < tol) return i;
+      }
+    }
+  }
+  return -1;
+}
+
+/* ── 포인터 입력 ── */
+const pointers = new Map();
+let gesture = null;   // {type:'pan'|'pinch'|'drag'|'pen'|'arrow'|'move', ...}
+let lastTap = { t: 0, x: 0, y: 0 };
+
+function evtPos(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  cv.setPointerCapture(e.pointerId);
+  const p = evtPos(e);
+  pointers.set(e.pointerId, p);
+  if (txtBox.style.display !== 'none') commitTxt();
+
+  if (pointers.size === 2) {           // 핀치 시작 → 진행 중 제스처 무효화
+    const arr = [...pointers.values()];
+    gesture = { type: 'pinch', d: Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y),
+                cx: (arr[0].x + arr[1].x) / 2, cy: (arr[0].y + arr[1].y) / 2 };
+    return;
+  }
+  const wx = s2wX(p.x), wy = s2wY(p.y);
+  const t = state.tool;
+
+  if (t === 'pan') { gesture = { type: 'pan', px: p.x, py: p.y }; return; }
+
+  if (t === 'select') {
+    // 0) 선택된 텍스트의 크기조절 핸들을 잡았는지 확인
+    if (state.selected >= 0 && state.shapes[state.selected].type === 'text') {
+      const s = state.shapes[state.selected];
+      const hp = textHandlePos(s);
+      if (Math.hypot(p.x - hp.x, p.y - hp.y) < 22) {
+        pushUndo();
+        const d0 = Math.max(12, Math.hypot(p.x - w2sX(s.x), p.y - w2sY(s.y)));
+        gesture = { type: 'tresize', d0, sz0: s.sz || 1 };
+        return;
+      }
+    }
+    // 1) 이미 선택된 선/화살표의 핸들을 잡았는지 먼저 확인
+    const h = handleAt(p.x, p.y);
+    if (h) {
+      const s = state.shapes[state.selected];
+      const now = Date.now();
+      const isDbl = now - lastTap.t < 350 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24;
+      lastTap = { t: now, x: p.x, y: p.y };
+      const minKeep = s.type === 'measure_area' ? 3 : 2;
+      if (h.kind === 'v' && isDbl && (s.type === 'line' || s.type === 'pen' || s.type === 'measure_line' || s.type === 'measure_area') && s.pts.length > minKeep) {
+        pushUndo(); s.pts.splice(h.idx, 1); render(); return;   // 꼭지점 더블탭 삭제
+      }
+      pushUndo();
+      if (h.kind === 'm') { s.pts.splice(h.idx, 0, { x: wx, y: wy }); gesture = { type: 'vertex', idx: h.idx }; }
+      else gesture = { type: 'vertex', idx: h.idx };
+      render(); return;
+    }
+    // 2) 도형 선택 / 전체 이동 (더블탭 시 바로 이름변경)
+    const hit = hitTest(p.x, p.y);
+    const now2 = Date.now();
+    const isDblSel = hit >= 0 && hit === state.selected &&
+      now2 - lastTap.t < 400 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 26;
+    lastTap = { t: now2, x: p.x, y: p.y };
+    state.selected = hit;
+    if (hit >= 0) {
+      showSelBar();
+      syncSizeUI(); syncBgUI(); syncBgColorUI();
+      render();
+      if (isDblSel) { renameSelected(); return; }
+      pushUndo();
+      gesture = { type: 'move', wx, wy };
+    } else { hideSelBar(); syncSizeUI(); syncBgUI(); syncBgColorUI(); gesture = { type: 'pan', px: p.x, py: p.y }; }
+    render(); return;
+  }
+  if (t === 'erase') {
+    const hit = hitTest(p.x, p.y);
+    if (hit >= 0) { pushUndo(); state.shapes.splice(hit, 1); render(); }
+    return;
+  }
+  if (t === 'officer' || t === 'traffic') {
+    pushUndo();
+    state.officerNo++;
+    state.shapes.push({ type: 'officer', x: wx, y: wy, label: '', sz: state.size, ptype: t === 'traffic' ? 'traffic' : 'general' });
+    render(); return;
+  }
+  if (t === 'squad') {
+    pushUndo();
+    state.shapes.push({ type: 'squad', x: wx, y: wy, label: '제' + state.squadUnit + '기동대 ' + state.squadTeam + '팀', sz: state.size });
+    state.squadTeam++;
+    if (state.squadTeam > 8) { state.squadTeam = 1; state.squadUnit++; }
+    render(); return;
+  }
+  if (t === 'bus') {
+    pushUndo();
+    state.shapes.push({ type: 'bus', x: wx, y: wy, label: '', sz: state.size });
+    render(); return;
+  }
+  if (t === 'policeline') {
+    const now = Date.now();
+    const isDbl = now - lastTap.t < 350 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24;
+    lastTap = { t: now, x: p.x, y: p.y };
+    if (!state.draft) { state.draft = { kind: 'police', pts: [{ x: wx, y: wy }] }; showFinishBar(); }
+    else if (isDbl) { finishDraft(); return; }
+    else state.draft.pts.push({ x: wx, y: wy });
+    render(); return;
+  }
+  if (t === 'measureLine' || t === 'measureArea') {
+    const now = Date.now();
+    const isDbl = now - lastTap.t < 350 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24;
+    lastTap = { t: now, x: p.x, y: p.y };
+    if (!state.draft) { state.draft = { kind: t, pts: [{ x: wx, y: wy }] }; showFinishBar(); }
+    else if (isDbl) { finishDraft(); return; }
+    else state.draft.pts.push({ x: wx, y: wy });
+    render(); return;
+  }
+  if (t === 'arrow') { gesture = { type: 'arrow', a: { x: wx, y: wy }, b: { x: wx, y: wy } }; return; }
+  if (t === 'pen') {
+    const now = Date.now();
+    const isDbl = now - lastTap.t < 350 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 24;
+    lastTap = { t: now, x: p.x, y: p.y };
+    if (!state.draft) { state.draft = { kind: 'pen', pts: [{ x: wx, y: wy }] }; showFinishBar(); }
+    else if (isDbl) { finishDraft(); return; }
+    else state.draft.pts.push({ x: wx, y: wy });
+    render(); return;
+  }
+  if (t === 'text')  {
+    showTxtBox(p.x, p.y, wx, wy, '', null, {
+      center: true, multiline: true, sz: state.size,
+      color: state.color, bg: state.textBg, bgColor: state.textBgColor,
+    });
+    return;
+  }
+});
+
+cv.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) {
+    if (state.draft && pointers.size === 0) {   // 미리보기 커서
+      const p = evtPos(e);
+      state.draft.cursor = { x: s2wX(p.x), y: s2wY(p.y) };
+      render();
+    }
+    return;
+  }
+  const p = evtPos(e);
+  pointers.set(e.pointerId, p);
+
+  if (gesture && gesture.type === 'pinch' && pointers.size === 2) {
+    const arr = [...pointers.values()];
+    const d = Math.hypot(arr[0].x - arr[1].x, arr[0].y - arr[1].y);
+    const cx = (arr[0].x + arr[1].x) / 2, cy = (arr[0].y + arr[1].y) / 2;
+    if (gesture.d > 0) zoomAt(cx, cy, d / gesture.d);
+    state.view.x -= (cx - gesture.cx) / state.view.scale;
+    state.view.y -= (cy - gesture.cy) / state.view.scale;
+    gesture.d = d; gesture.cx = cx; gesture.cy = cy;
+    render(); return;
+  }
+  if (!gesture) return;
+
+  if (gesture.type === 'pan') {
+    state.view.x -= (p.x - gesture.px) / state.view.scale;
+    state.view.y -= (p.y - gesture.py) / state.view.scale;
+    gesture.px = p.x; gesture.py = p.y;
+    render();
+  } else if (gesture.type === 'tresize' && state.selected >= 0) {
+    const s = state.shapes[state.selected];
+    const d = Math.hypot(p.x - w2sX(s.x), p.y - w2sY(s.y));
+    s.sz = Math.min(6, Math.max(0.3, gesture.sz0 * d / gesture.d0));
+    syncSizeUI(); render();
+  } else if (gesture.type === 'vertex' && state.selected >= 0) {
+    const s = state.shapes[state.selected];
+    const pts = editablePts(s);
+    if (pts && pts[gesture.idx]) {
+      pts[gesture.idx].x = s2wX(p.x);
+      pts[gesture.idx].y = s2wY(p.y);
+      render();
+    }
+  } else if (gesture.type === 'move' && state.selected >= 0) {
+    const wx = s2wX(p.x), wy = s2wY(p.y);
+    const dx = wx - gesture.wx, dy = wy - gesture.wy;
+    gesture.wx = wx; gesture.wy = wy;
+    const s = state.shapes[state.selected];
+    if (s.pts) for (const q of s.pts) { q.x += dx; q.y += dy; }
+    else { s.x += dx; s.y += dy; }
+    positionSelBar(); render();
+  } else if (gesture.type === 'arrow') {
+    gesture.b = { x: s2wX(p.x), y: s2wY(p.y) };
+    render();
+    drawArrowShape(ctx, gesture.a, gesture.b, state.color, state.size);
+  }
+});
+
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (gesture) {
+    if (gesture.type === 'arrow') {
+      const L = Math.hypot(gesture.b.x - gesture.a.x, gesture.b.y - gesture.a.y) * state.view.scale;
+      if (L > 12) { pushUndo(); state.shapes.push({ type: 'arrow', pts: [gesture.a, gesture.b], color: state.color, w: state.size }); }
+    }
+    if (pointers.size === 0) gesture = null;
+    else if (pointers.size === 1 && gesture.type === 'pinch') {
+      const rest = [...pointers.values()][0];
+      gesture = { type: 'pan', px: rest.x, py: rest.y };
+    }
+    render();
+  }
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', endPointer);
+
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const p = evtPos(e);
+  zoomAt(p.x, p.y, Math.pow(1.0016, -e.deltaY));
+  render();
+}, { passive: false });
+
+/* ── 선 완료 바 ── */
+const finishBar = document.getElementById('finishBar');
+function showFinishBar() { finishBar.style.display = 'flex'; }
+function hideFinishBar() { finishBar.style.display = 'none'; }
+function finishDraft() {
+  const d = state.draft;
+  if (d) {
+    if (d.kind === 'pen' && d.pts.length >= 2) {
+      pushUndo();
+      state.shapes.push({ type: 'pen', pts: d.pts, color: state.color, w: state.size });
+    } else if (d.kind === 'measureLine' && d.pts.length >= 2) {
+      pushUndo();
+      state.shapes.push({ type: 'measure_line', pts: d.pts });
+    } else if (d.kind === 'measureArea' && d.pts.length >= 3) {
+      pushUndo();
+      state.shapes.push({ type: 'measure_area', pts: d.pts });
+    } else if ((d.kind === 'police' || d.kind === 'barrier') && d.pts.length >= 2) {
+      pushUndo();
+      state.shapes.push({ type: 'line', kind: d.kind, pts: d.pts, w: state.size });
+    }
+  }
+  state.draft = null; hideFinishBar(); render();
+}
+document.getElementById('finishDone').onclick = finishDraft;
+document.getElementById('finishCancel').onclick = () => { state.draft = null; hideFinishBar(); render(); };
+
+/* ── 선택 바 ── */
+const selBar = document.getElementById('selBar');
+function showSelBar() { selBar.style.display = 'flex'; positionSelBar(); }
+function hideSelBar() { selBar.style.display = 'none'; }
+function positionSelBar() { /* 하단 중앙 고정 */ }
+document.getElementById('selDelete').onclick = () => {
+  if (state.selected >= 0) {
+    state.shapes.splice(state.selected, 1);
+    state.selected = -1; hideSelBar(); render();
+  }
+};
+function renameSelected() {
+  if (state.selected < 0) return;
+  const s = state.shapes[state.selected];
+  if (!(s.type === 'squad' || s.type === 'officer' || s.type === 'bus' || s.type === 'text')) return;
+  const cur = s.type === 'text' ? s.text : s.label;
+  const k = s.sz || 1;
+  const cx = w2sX(s.x), cy = w2sY(s.y);
+
+  if (s.type === 'text') {
+    showTxtBox(cx, cy, null, null, cur, val => {
+      pushUndo(); s.text = val; render();
+    }, { center: true, multiline: true, sz: k, color: s.color, bg: s.bg, bgColor: s.bgColor });
+    return;
+  }
+  let topY;                                   // 표식(라벨)의 화면상 윗쪽 경계
+  if (s.type === 'squad') topY = cy - 14 * k;
+  else if (s.type === 'bus') topY = cy - 12 * k;
+  else topY = cy - 15 * k;                    // officer
+  const sx = Math.max(8, Math.min(cx - 95, stage.clientWidth - 208));
+  const sy = Math.max(8, topY - 8);
+  showTxtBox(sx, sy, null, null, cur, val => {
+    pushUndo(); s.label = val; render();
+  }, { multiline: false, sz: 1, color: '#FFD023' });
+}
+document.getElementById('selRename').onclick = renameSelected;
+
+/* ── 텍스트 입력 팝업 ── */
+const txtBox = document.getElementById('txtBox');
+const txtInput = document.getElementById('txtInput');
+let txtCb = null, txtClosing = true;
+function autoSizeTxtInput() {
+  const k = parseFloat(txtInput.dataset.scale || '1');
+  const fontPx = Math.max(10, 14 * k);
+  txtInput.style.fontSize = fontPx + 'px';
+  ctx.font = 'bold ' + fontPx + 'px sans-serif';
+  const lines = txtInput.value.split('\n');
+  let maxW = 30;
+  for (const line of lines) maxW = Math.max(maxW, ctx.measureText(line || ' ').width);
+  txtInput.style.width = Math.min(420, maxW + 12) + 'px';
+  txtInput.style.height = 'auto';
+  txtInput.style.height = txtInput.scrollHeight + 'px';
+}
+/* opts: {wx,wy,color,bg,bgColor,sz,multiline,align} — align:'label'이면 아이콘 위, 기본은 그 지점에 바로 겹쳐서 편집 */
+function showTxtBox(sx, sy, wx, wy, initial, cb, opts) {
+  opts = opts || {};
+  const k = opts.sz != null ? opts.sz : 1;
+  txtClosing = false;
+  txtBox.style.display = 'block';
+  txtInput.dataset.scale = k;
+  txtInput.dataset.multiline = opts.multiline ? '1' : '0';
+  txtInput.style.color = opts.color || '#FFD023';
+  const alpha = opts.bg != null ? opts.bg : 0;
+  txtInput.style.background = alpha > 0.01 ? hexToRgba(opts.bgColor || '#000000', alpha) : 'transparent';
+  txtInput.value = initial || '';
+  autoSizeTxtInput();
+  const boxW = parseFloat(txtInput.style.width), boxH = parseFloat(txtInput.style.height);
+  let left = sx, top = sy;
+  if (opts.center) { left = sx - boxW / 2; top = sy - boxH * 0.72; }  // 지점에 겹쳐서 편집(실제 글자 위치와 근접하게)
+  else top = sy - boxH;                                              // 표식 위쪽에 띄우기(경찰관·부대·버스 이름)
+  left = Math.max(4, Math.min(left, stage.clientWidth - boxW - 4));
+  top = Math.max(4, Math.min(top, stage.clientHeight - boxH - 4));
+  txtBox.style.left = left + 'px';
+  txtBox.style.top = top + 'px';
+  txtCb = cb || (val => {
+    pushUndo();
+    state.shapes.push({ type: 'text', x: wx, y: wy, text: val, color: state.color, sz: state.size, bg: state.textBg, bgColor: state.textBgColor });
+    render();
+  });
+  setTimeout(() => { txtInput.focus(); if (initial) txtInput.select(); }, 30);
+}
+function hideTxtBox() { txtBox.style.display = 'none'; }
+function commitTxt() {
+  if (txtClosing) return;
+  txtClosing = true;
+  const v = txtInput.value.replace(/\n+$/, '');
+  hideTxtBox();
+  if (v.trim() && txtCb) txtCb(v);
+  txtCb = null;
+}
+function cancelTxt() {
+  if (txtClosing) return;
+  txtClosing = true;
+  hideTxtBox();
+  txtCb = null;
+}
+txtInput.addEventListener('input', autoSizeTxtInput);
+txtInput.addEventListener('blur', () => commitTxt());
+txtInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.preventDefault(); cancelTxt(); txtInput.blur(); }
+  else if (e.key === 'Enter') {
+    const multi = txtInput.dataset.multiline === '1';
+    if (!multi) { e.preventDefault(); txtInput.blur(); }               // 한 줄 라벨: Enter로 확정
+    else if (e.ctrlKey || e.metaKey) { e.preventDefault(); txtInput.blur(); } // 여러 줄 텍스트: Ctrl/Cmd+Enter로 확정
+    // 그 외 Enter는 줄바꿈으로 그대로 입력됨
+  }
+});
+
+/* ── 배너 ── */
+let bannerTimer = null;
+function showBanner(msg) {
+  const b = document.getElementById('banner');
+  b.textContent = msg; b.style.display = 'block';
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => b.style.display = 'none', 6000);
+}
+
+/* ── 도구/색상 UI ── */
+document.querySelectorAll('.tool').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tool').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    state.tool = btn.dataset.tool;
+    const draftTools = ['policeline', 'pen', 'measureLine', 'measureArea'];
+    if (!draftTools.includes(state.tool) && state.draft) finishDraft();
+    if (state.tool !== 'select') { state.selected = -1; hideSelBar(); }
+    const hints = {
+      pan: '✋ 드래그로 이동, 휠/두 손가락으로 확대·축소',
+      select: '탭해 선택·드래그 이동 · 더블탭하면 바로 이름변경 · 선은 ● 꼭지점, 텍스트는 ◢ 핸들 드래그로 크기 조절',
+      officer: '배치 지점을 탭하면 일반경찰(파란색) 표식이 생깁니다',
+      traffic: '배치 지점을 탭하면 교통경찰(흰색) 표식이 생깁니다',
+      squad: '탭하면 "제N기동대 1~8팀" 순서로 이름이 자동 부여됩니다 · 더블탭으로 수정',
+      policeline: '탭으로 꺾인점 추가 → 더블탭 또는 [선 완료]',
+      bus: '배치 지점을 탭하면 경찰버스 표식이 생깁니다',
+      arrow: '드래그해서 군중·차량 동선 화살표를 그립니다',
+      pen: '탭으로 꼭지점을 찍어 직선을 그립니다 → 더블탭 또는 [선 완료] · 선택 후 꼭지점 드래그로 수정',
+      measureLine: '탭으로 지점을 찍어 거리를 잽니다 → 더블탭 또는 [선 완료] · 선택 후 꼭지점 드래그로 재측정',
+      measureArea: '탭으로 꼭지점을 찍어 면적을 잽니다(3점 이상) → 더블탭 또는 [선 완료]',
+      text: '탭한 위치에 텍스트를 입력합니다 · 좌측 [글자 배경] 슬라이더로 박스 투명도 조절',
+      erase: '지울 도형을 탭하세요',
+    };
+    document.getElementById('hint').textContent = hints[state.tool] || '';
+    scrollToolsForTool(state.tool);
+    render();
+  });
+});
+function scrollToolsForTool(tool) {
+  const colorSizeTools = ['policeline', 'bus', 'pen', 'measureLine', 'measureArea', 'arrow', 'text'];
+  if (!colorSizeTools.includes(tool)) return;
+  const target = tool === 'text'
+    ? document.getElementById('bgPalette')          // 텍스트: 배경색까지 포함해 끝까지 보이도록
+    : document.getElementById('sizeRange');          // 그 외 그리기 도구: 색상·굵기까지만
+  if (target) target.scrollIntoView({ behavior: 'smooth', inline: 'end', block: 'nearest' });
+}
+const COLORS = ['#FF5A5F', '#3B7BFF', '#FFD023', '#37D3A0', '#FFFFFF', '#111111'];
+const paletteEl = document.getElementById('palette');
+COLORS.forEach((c, i) => {
+  const d = document.createElement('div');
+  d.className = 'sw' + (i === 0 ? ' on' : '');
+  d.style.background = c;
+  d.onclick = () => {
+    document.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+    d.classList.add('on');
+    state.color = c;
+  };
+  paletteEl.appendChild(d);
+});
+
+/* ── 크기·두께 조절 ── */
+const sizeRange = document.getElementById('sizeRange');
+const sizeVal = document.getElementById('sizeVal');
+let sizeUndoDone = false;
+function shapeScale(s) { return s.sz != null ? s.sz : (s.w != null ? s.w : 1); }
+function setShapeScale(s, v) {
+  if (s.type === 'officer' || s.type === 'squad' || s.type === 'bus' || s.type === 'text') s.sz = v;
+  else if (s.type === 'measure_line' || s.type === 'measure_area') { /* 측정선은 항상 일정한 굵기 유지 */ }
+  else s.w = v;
+}
+function syncSizeUI() {
+  const v = state.selected >= 0 ? shapeScale(state.shapes[state.selected]) : state.size;
+  sizeRange.value = v;
+  sizeVal.textContent = '×' + Number(v).toFixed(1);
+}
+sizeRange.addEventListener('input', () => {
+  const v = parseFloat(sizeRange.value);
+  sizeVal.textContent = '×' + v.toFixed(1);
+  if (state.selected >= 0) {           // 선택된 도형의 크기·두께 즉시 변경
+    if (!sizeUndoDone) { pushUndo(); sizeUndoDone = true; }
+    setShapeScale(state.shapes[state.selected], v);
+    render();
+  } else state.size = v;               // 새로 그릴 도형의 기본값
+});
+sizeRange.addEventListener('change', () => { sizeUndoDone = false; });
+
+/* ── 텍스트 배경 투명도 ── */
+const bgRange = document.getElementById('bgRange');
+const bgVal = document.getElementById('bgVal');
+let bgUndoDone = false;
+function syncBgUI() {
+  const sel = state.selected >= 0 ? state.shapes[state.selected] : null;
+  const v = (sel && sel.type === 'text') ? (sel.bg != null ? sel.bg : 0.55) : state.textBg;
+  bgRange.value = v;
+  bgVal.textContent = Math.round(v * 100) + '%';
+}
+bgRange.addEventListener('input', () => {
+  const v = parseFloat(bgRange.value);
+  bgVal.textContent = Math.round(v * 100) + '%';
+  const sel = state.selected >= 0 ? state.shapes[state.selected] : null;
+  if (sel && sel.type === 'text') {
+    if (!bgUndoDone) { pushUndo(); bgUndoDone = true; }
+    sel.bg = v;
+    render();
+  } else state.textBg = v;
+});
+bgRange.addEventListener('change', () => { bgUndoDone = false; });
+
+/* ── 텍스트 배경색 ── */
+const BG_COLORS = ['#000000', '#FFFFFF', '#0D2A4A', '#7A1F1F', '#1B2A41', '#F0B429'];
+const bgPaletteEl = document.getElementById('bgPalette');
+BG_COLORS.forEach((c, i) => {
+  const d = document.createElement('div');
+  d.className = 'sw' + (i === 0 ? ' on' : '');
+  d.style.background = c;
+  if (c === '#FFFFFF') d.style.boxShadow = 'inset 0 0 0 1px #667'; // 흰색 스와치 경계 보정
+  d.onclick = () => {
+    bgPaletteEl.querySelectorAll('.sw').forEach(s => s.classList.remove('on'));
+    d.classList.add('on');
+    const sel = state.selected >= 0 ? state.shapes[state.selected] : null;
+    if (sel && sel.type === 'text') { pushUndo(); sel.bgColor = c; render(); }
+    else state.textBgColor = c;
+  };
+  bgPaletteEl.appendChild(d);
+});
+function syncBgColorUI() {
+  const sel = state.selected >= 0 ? state.shapes[state.selected] : null;
+  const c = (sel && sel.type === 'text') ? (sel.bgColor || '#000000') : state.textBgColor;
+  bgPaletteEl.querySelectorAll('.sw').forEach((s, i) => s.classList.toggle('on', BG_COLORS[i] === c));
+}
+
+/* ── 프로젝트명 ── */
+const projInput = document.getElementById('projName');
+projInput.addEventListener('input', () => {
+  state.projName = projInput.value.trim();
+  document.title = state.projName ? state.projName + ' · 경비요도 제작' : '경비요도 제작';
+});
+
+/* ── 헤더 동작 ── */
+function syncHeader() {
+  document.getElementById('btnUndo').disabled = !undoStack.length;
+  document.getElementById('btnRedo').disabled = !redoStack.length;
+}
+document.getElementById('btnUndo').onclick = undo;
+document.getElementById('btnRedo').onclick = redo;
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (document.activeElement === txtInput) return;
+    if (state.selected >= 0) { pushUndo(); state.shapes.splice(state.selected, 1); state.selected = -1; hideSelBar(); render(); }
+  }
+  if (e.key === 'Enter' && state.draft) finishDraft();
+});
+
+document.getElementById('btnClear').onclick = () => {
+  if (!state.shapes.length) return;
+  pushUndo(); state.shapes = []; state.selected = -1;
+  state.squadUnit = 1; state.squadTeam = 1; state.officerNo = 0;
+  hideSelBar(); render();
+};
+
+/* 모드 전환 */
+const savedView = { map: null, photo: null };
+let modeInited = false;
+function setMode(m) {
+  if (modeInited && m === state.mode) return;          // 같은 모드 재클릭 무시
+  if (modeInited) savedView[state.mode] = { ...state.view };  // 초기화 이후에만 화면 저장
+  state.mode = m;
+  modeInited = true;
+  document.getElementById('modeMap').classList.toggle('on', m === 'map');
+  document.getElementById('modePhoto').classList.toggle('on', m === 'photo');
+  document.getElementById('btnPhoto').style.display = m === 'photo' ? '' : 'none';
+  document.getElementById('layerSeg').style.display = m === 'map' ? '' : 'none';
+  if (savedView[m]) state.view = { ...savedView[m] };
+  else if (m === 'map') setMapView(129.3106, 35.5744, 17);   // 울산경찰청(중구 성안로 112) 일대
+  else if (state.photo) fitPhoto();
+  else state.view = { x: 0, y: 0, scale: 1 };
+  render();
+}
+document.getElementById('modeMap').onclick = () => setMode('map');
+document.getElementById('modePhoto').onclick = () => setMode('photo');
+document.getElementById('layerOsm').onclick = () => {
+  if (state.baseLayer === 'osm') return;
+  state.baseLayer = 'osm'; tileFails = 0;
+  document.getElementById('layerOsm').classList.add('on');
+  document.getElementById('layerSat').classList.remove('on');
+  render();
+};
+document.getElementById('layerSat').onclick = () => {
+  if (state.baseLayer === 'sat') return;
+  state.baseLayer = 'sat'; tileFails = 0;
+  document.getElementById('layerSat').classList.add('on');
+  document.getElementById('layerOsm').classList.remove('on');
+  render();
+};
+
+/* ── GeoTIFF 좌표계 ── */
+const KOREA_PROJ4_DEFS = {
+  3857: '+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs',
+  5178: '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=bessel +towgs84=-145.907,505.034,685.756,-1.162,2.347,1.592,6.342 +units=m +no_defs',
+  5179: '+proj=tmerc +lat_0=38 +lon_0=127.5 +k=0.9996 +x_0=1000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5181: '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=500000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5185: '+proj=tmerc +lat_0=38 +lon_0=125 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5186: '+proj=tmerc +lat_0=38 +lon_0=127 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5187: '+proj=tmerc +lat_0=38 +lon_0=129 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  5188: '+proj=tmerc +lat_0=38 +lon_0=131 +k=1 +x_0=200000 +y_0=600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
+  32651: '+proj=utm +zone=51 +datum=WGS84 +units=m +no_defs',
+  32652: '+proj=utm +zone=52 +datum=WGS84 +units=m +no_defs',
+};
+function parseGeoKeys(dir) {
+  const keys = {};
+  if (!dir || dir.length < 4) return keys;
+  const n = dir[3];
+  for (let i = 0; i < n; i++) {
+    const o = 4 + i * 4;
+    keys[dir[o]] = { loc: dir[o + 1], count: dir[o + 2], val: dir[o + 3] };
+  }
+  return keys;
+}
+/* ifd(UTIF IFD)에서 픽셀→지리좌표 아핀변환 + 좌표계(EPSG)를 추출. GeoTIFF가 아니면 null */
+function extractGeoTransform(ifd) {
+  const geoDir = ifd.t34735;
+  if (!geoDir) return null;
+  const keys = parseGeoKeys(geoDir);
+  let epsg = null;
+  if (keys[3072] && keys[3072].val && keys[3072].val !== 32767) epsg = keys[3072].val;      // Projected CS
+  else if (keys[2048] && keys[2048].val && keys[2048].val !== 32767) epsg = keys[2048].val;  // Geographic CS
+  if (!epsg) return null;
+
+  const xform = ifd.t34264, scale = ifd.t33550, tie = ifd.t33922;
+  let toModel = null;
+  if (xform && xform.length >= 16) {
+    const m = xform;
+    toModel = (col, row) => ({ x: m[0] * col + m[1] * row + m[3], y: m[4] * col + m[5] * row + m[7] });
+  } else if (scale && tie && tie.length >= 6) {
+    const sx = scale[0], sy = scale[1];
+    const i0 = tie[0], j0 = tie[1], x0 = tie[3], y0 = tie[4];
+    toModel = (col, row) => ({ x: x0 + (col - i0) * sx, y: y0 - (row - j0) * sy });
+  }
+  if (!toModel) return null;
+  return { epsg, toModel };
+}
+function geoToLonLat(epsg, x, y) {
+  if (epsg === 4326) return { lon: x, lat: y };
+  if (typeof proj4 === 'undefined') return null;
+  const key = 'EPSG:' + epsg;
+  const def = KOREA_PROJ4_DEFS[epsg];
+  try {
+    if (def) proj4.defs(key, def);
+    const r = proj4(key, 'EPSG:4326', [x, y]);
+    if (!r || !isFinite(r[0]) || !isFinite(r[1])) return null;
+    return { lon: r[0], lat: r[1] };
+  } catch (e) { return null; }
+}
+function fitToGeoPhoto() {
+  const gp = state.geoPhoto; if (!gp) return;
+  const w = Math.abs(gp.wx1 - gp.wx0), h = Math.abs(gp.wy1 - gp.wy0);
+  if (!w || !h) return;
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const s = Math.min(W / w, H / h) * 0.9;
+  state.view.scale = s;
+  const cx = (gp.wx0 + gp.wx1) / 2, cy = (gp.wy0 + gp.wy1) / 2;
+  state.view.x = cx - (W / 2) / s;
+  state.view.y = cy - (H / 2) / s;
+}
+function placeGeoImage(canvas, origW, origH, geo) {
+  const c00 = geo.toModel(0, 0), c11 = geo.toModel(origW, origH);
+  const ll00 = geoToLonLat(geo.epsg, c00.x, c00.y);
+  const ll11 = geoToLonLat(geo.epsg, c11.x, c11.y);
+  if (!ll00 || !ll11) {
+    showBanner('지원하지 않는 좌표계(EPSG:' + geo.epsg + ')라 위치 정합 없이 사진으로 불러옵니다.');
+    loadPhoto(canvas.toDataURL('image/png'));
+    return;
+  }
+  const wTL = lonLatToWorld(ll00.lon, ll00.lat), wBR = lonLatToWorld(ll11.lon, ll11.lat);
+  state.geoPhoto = { canvas, wx0: wTL.x, wy0: wTL.y, wx1: wBR.x, wy1: wBR.y };
+  document.getElementById('btnGeoClear').style.display = '';
+  if (state.mode !== 'map') setMode('map');
+  fitToGeoPhoto();
+  showBanner('GeoTIFF 좌표(EPSG:' + geo.epsg + ')를 인식해 지도 위 실제 위치에 배치했습니다.');
+  render();
+}
+document.getElementById('btnGeoClear').onclick = () => {
+  state.geoPhoto = null;
+  document.getElementById('btnGeoClear').style.display = 'none';
+  render();
+};
+
+/* 사진 열기 */
+document.getElementById('btnPhoto').onclick = () => document.getElementById('fileImg').click();
+document.getElementById('fileImg').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  openImageFile(f);
+  e.target.value = '';
+});
+function isTiffFile(f) {
+  return /\.tiff?$/i.test(f.name || '') || f.type === 'image/tiff' || f.type === 'image/tif';
+}
+function openImageFile(f) {
+  if (isTiffFile(f)) { loadTiffFile(f); return; }
+  const rd = new FileReader();
+  rd.onload = () => loadPhoto(rd.result);
+  rd.readAsDataURL(f);
+}
+function loadTiffFile(f) {
+  if (typeof UTIF === 'undefined') {
+    showBanner('TIFF 디코더를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');
+    return;
+  }
+  showBanner('TIFF 파일을 변환하는 중입니다…');
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const buf = rd.result;
+      const ifds = UTIF.decode(buf);
+      if (!ifds || !ifds.length) throw new Error('no ifd');
+      UTIF.decodeImage(buf, ifds[0]);
+      const rgba = UTIF.toRGBA8(ifds[0]);
+      const w = ifds[0].width, h = ifds[0].height;
+      const src = document.createElement('canvas');
+      src.width = w; src.height = h;
+      src.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer || rgba), w, h), 0, 0);
+
+      const MAX_PX = 30e6;                     // 항공/드론 TIFF 등 초대형 이미지 안전장치
+      let outW = w, outH = h;
+      if (w * h > MAX_PX) {
+        const s = Math.sqrt(MAX_PX / (w * h));
+        outW = Math.max(1, Math.round(w * s)); outH = Math.max(1, Math.round(h * s));
+      }
+      const out = document.createElement('canvas');
+      out.width = outW; out.height = outH;
+      out.getContext('2d').drawImage(src, 0, 0, outW, outH);
+      if (outW !== w || outH !== h) showBanner('이미지가 매우 커서 화면 표시용으로 축소했습니다 (' + w + '×' + h + ' → ' + outW + '×' + outH + ').');
+
+      const geo = extractGeoTransform(ifds[0]);   // 원본 w,h 기준으로 지리좌표 계산(축소 전 픽셀 좌표계 그대로 사용)
+      if (geo) placeGeoImage(out, w, h, geo);
+      else loadPhoto(out.toDataURL('image/png'));
+    } catch (err) {
+      showBanner('TIFF 파일을 읽을 수 없습니다. 다른 뷰어로 PNG/JPG로 변환 후 다시 시도해 주세요.');
+    }
+  };
+  rd.onerror = () => showBanner('파일을 읽는 중 오류가 발생했습니다.');
+  rd.readAsArrayBuffer(f);
+}
+function loadPhoto(dataURL) {
+  const img = new Image();
+  img.onload = () => {
+    state.photo = img; state.photoURL = dataURL;
+    if (state.mode !== 'photo') setMode('photo'); else { fitPhoto(); render(); }
+  };
+  img.src = dataURL;
+}
+function fitPhoto() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const s = Math.min(W / state.photo.width, H / state.photo.height) * 0.96;
+  state.view.scale = s;
+  state.view.x = -(W / s - state.photo.width) / 2;
+  state.view.y = -(H / s - state.photo.height) / 2;
+}
+/* 드래그 앤 드롭 */
+stage.addEventListener('dragover', e => e.preventDefault());
+stage.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f && (f.type.startsWith('image/') || isTiffFile(f))) openImageFile(f);
+});
+
+/* PNG 저장 */
+document.getElementById('btnPng').onclick = () => {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const out = document.createElement('canvas');
+  out.width = W * 2; out.height = H * 2;
+  const g = out.getContext('2d');
+  g.setTransform(2, 0, 0, 2, 0, 0);
+  drawBackground(g, W, H);
+  for (const s of state.shapes) drawShape(g, s, false);
+  // 요약 스탬프
+  g.font = 'bold 11px sans-serif';
+  const stamp = (state.projName || '경비요도 제작') + ' · ' + new Date().toLocaleString('ko-KR');
+  const sw = g.measureText(stamp).width + 16;
+  g.fillStyle = 'rgba(14,20,32,.85)'; g.fillRect(8, 8, sw, 24);
+  g.fillStyle = '#FFD023'; g.fillText(stamp, 16, 24);
+  try {
+    out.toBlob(b => {
+      if (!b) { showBanner('저장에 실패했습니다. 지도 화면은 기기 스크린샷을 이용해 주세요.'); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = (state.projName || '경비요도 제작') + '_' + new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-') + '.png';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    }, 'image/png');
+  } catch (err) {
+    showBanner('지도 저장이 차단되었습니다(보안 정책). 기기 스크린샷을 이용해 주세요.');
+  }
+};
+
+/* 계획 저장/열기(JSON) */
+document.getElementById('btnJson').onclick = () => {
+  const data = {
+    app: 'deployment-planner', version: 1,
+    name: state.projName,
+    mode: state.mode, view: state.view,
+    shapes: state.shapes, squadUnit: state.squadUnit, squadTeam: state.squadTeam,
+    photoURL: state.mode === 'photo' ? state.photoURL : null,
+    geoPhoto: state.geoPhoto ? {
+      dataURL: state.geoPhoto.canvas.toDataURL('image/png'),
+      wx0: state.geoPhoto.wx0, wy0: state.geoPhoto.wy0, wx1: state.geoPhoto.wx1, wy1: state.geoPhoto.wy1,
+    } : null,
+  };
+  const b = new Blob([JSON.stringify(data)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = (state.projName || '경력배치계획') + '_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+};
+document.getElementById('btnOpen').onclick = () => document.getElementById('fileJson').click();
+document.getElementById('fileJson').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if (d.app !== 'deployment-planner') throw 0;
+      pushUndo();
+      state.shapes = d.shapes || [];
+      state.squadUnit = d.squadUnit || 1;
+      state.squadTeam = d.squadTeam || 1;
+      state.view = d.view || state.view;
+      state.projName = d.name || '';
+      projInput.value = state.projName;
+      document.title = state.projName ? state.projName + ' · 경비요도 제작' : '경비요도 제작';
+      if (d.photoURL) loadPhoto(d.photoURL);
+      else setMode(d.mode || 'map');
+      if (d.geoPhoto && d.geoPhoto.dataURL) {
+        const gimg = new Image();
+        gimg.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = gimg.width; c.height = gimg.height;
+          c.getContext('2d').drawImage(gimg, 0, 0);
+          state.geoPhoto = { canvas: c, wx0: d.geoPhoto.wx0, wy0: d.geoPhoto.wy0, wx1: d.geoPhoto.wx1, wy1: d.geoPhoto.wy1 };
+          document.getElementById('btnGeoClear').style.display = '';
+          render();
+        };
+        gimg.src = d.geoPhoto.dataURL;
+      } else {
+        state.geoPhoto = null;
+        document.getElementById('btnGeoClear').style.display = 'none';
+      }
+      render();
+    } catch { showBanner('계획 파일을 읽을 수 없습니다.'); }
+  };
+  rd.readAsText(f);
+  e.target.value = '';
+});
+
+/* ── 시작 ── */
+resize();
+setMode('map');
+syncHeader();
+syncSizeUI();
+syncBgUI();
+syncBgColorUI();
+</script>
+</body>
+</html>
