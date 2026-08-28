@@ -1057,6 +1057,10 @@ const PLACES = {
   // 집회가 반복되는 개별 지점. 실측 좌표를 받은 곳은 그대로 쓴다.
   "평강제일교회": [37.4910108, 126.8458393],
   "해남빌딩": [37.5618568, 126.9766021],
+  "타워8": [37.5704422, 126.9805296],
+  "서울중앙우체국": [37.5616414, 126.9814324],
+  "중앙우체국": [37.5616414, 126.9814324],
+  "포스트타워": [37.5616414, 126.9814324],
   "오류2동": [37.4930, 126.8390], "오류동": [37.4938, 126.8417],
 };
 
@@ -1083,10 +1087,18 @@ const PLACE_KEYS = Object.keys(PLACES).sort((a, b) => b.length - a.length);
  * "금감원 앞 <여의도>" 처럼 지점명과 법정동이 섞여 있어 세 단계로 훑는다.
  */
 function geocodeProtest(text) {
-  const flat = norm(text);
-  for (const k of PLACE_KEYS) if (flat.includes(norm(k))) return { pos: PLACES[k], via: k };
-  for (const k of AREA_KEYS) if (flat.includes(norm(k))) return { pos: AREA_CENTER[k], via: k };
-  for (const k of LANDMARK_KEYS) if (flat.includes(k)) return { pos: LANDMARKS[k], via: k };
+  // "타워8 앞 인도 <종로1가>" 처럼 지점명과 법정동이 함께 온다.
+  // 법정동은 넓은 범위라, 앞쪽 지점명이 사전에 있으면 그쪽을 먼저 쓴다.
+  // (사전 키 길이만으로 정렬하면 '종로1가'가 '타워8'보다 길어 잘못 잡힌다.)
+  const head = norm(String(text).split("<")[0]);
+  const full = norm(text);
+
+  for (const scope of [head, full]) {
+    if (!scope) continue;
+    for (const k of PLACE_KEYS) if (scope.includes(norm(k))) return { pos: PLACES[k], via: k };
+    for (const k of AREA_KEYS) if (scope.includes(norm(k))) return { pos: AREA_CENTER[k], via: k };
+    for (const k of LANDMARK_KEYS) if (scope.includes(k)) return { pos: LANDMARKS[k], via: k };
+  }
   return null;
 }
 
