@@ -394,6 +394,8 @@ canvas.chart{position:absolute;inset:0;width:100%!important;height:100%!importan
           <div>행사장 250m × 550m / 광화문광장</div>
           <div id="hudLine2">군중 미생성</div>
           <div id="hudLine3">출입구 폭 10m · 개방 6 / 6</div>
+          <div id="hudDens">밀집도 —</div>
+          <div id="hudDens2" style="color:#63788d;font-size:10.5px"></div>
           <div id="hudLine4" style="color:#63788d;font-size:10.5px;margin-top:3px"></div>
           <div id="hudLine6" style="color:#63788d;font-size:10.5px"></div>
         </div>
@@ -5524,7 +5526,8 @@ class Statistics{
     this.cur={
       total:0, active:0, exited:0, avgSpeed:0, maxD:0, avgD:0, jam:0,
       avgStag:0, avgExitDist:0, bottleneck:0, risk:0, grade:RISK_GRADES[0],
-      evacRate:0, gateCrowd:{}
+      evacRate:0, gateCrowd:{},
+      inside:0, siteDensity:0, usable:null
     };
   }
   markEvacStart(t,emergency){
@@ -5550,8 +5553,12 @@ class Statistics{
     const sim=this.sim, ppl=sim.people, site=sim.site;
     let active=0, exited=0, sumV=0, jam=0, sumStag=0, sumDist=0, nDist=0, total=0;
     const gateCrowd={}; site.gates.forEach(g=>gateCrowd[g.id]=0);
+    let inside=0;                     // 설정 구역(펜스) 안에 실제로 있는 인원
     for(let i=0;i<ppl.length;i++){
       const p=ppl[i];
+      /* 구역 내 인원에는 배치 인력도 포함한다 — 자리를 차지하고 있으므로
+         빼면 면적당 인원이 실제보다 낮게 나온다. */
+      if(!p.exited && site.isInsideVenue(p.x,p.y)) inside++;
       if(p.state==='post') continue;
       total++;
       if(p.exited){ exited++; continue; }
@@ -5567,6 +5574,12 @@ class Statistics{
       }
     }
     const d=sim.heat.stats(site);
+    /* 구역 전체 평균 밀집도 = 구역 내 인원 / 통행 가능 면적.
+       분모는 다각형 넓이가 아니라 '실제로 설 수 있는 면적'이어야 한다.
+       건물·통행불가로 막힌 곳까지 나누면 실제보다 낮게 나온다. */
+    if(!sim.usableArea && !sim._usableDone && sim.computeUsableArea) sim.computeUsableArea();
+    const ua=sim.usableArea;
+    const siteDensity=(ua&&ua.open>0)?inside/ua.open:0;
     const avgSpeed = active>0? sumV/active : 0;
     const avgStag  = active>0? sumStag/active : 0;
     const avgExitDist = nDist>0? sumDist/nDist : 0;
@@ -5612,7 +5625,8 @@ class Statistics{
     this.cur={
       total, active, exited, avgSpeed, maxD:d.max, avgD:d.avg, jam,
       avgStag, avgExitDist, bottleneck:bott, risk, grade:riskGrade(risk),
-      evacRate, gateCrowd
+      evacRate, gateCrowd,
+      inside, siteDensity, usable:ua
     };
     return this.cur;
   }
@@ -5706,25 +5720,9 @@ class RiskReport{
     };
   }
 
-  /** 실제로 사람이 설 수 있는 면적 (㎡).
-   *  행사장 다각형 안의 경로격자 셀 중 차단되지 않은 것만 센다.
-   *  건물·통행불가 지정이 여기에 그대로 반영된다. */
+  /** 유효 통행 면적 — 시뮬레이션이 rebuildWorld 때 계산해 둔 값 */
   _usableArea(){
-    const sim=this.sim, pf=sim.path, site=sim.site;
-    if(!pf || !pf.blocked) return null;
-    const cs=pf.cs, cell=cs*cs;
-    let open=0, total=0;
-    for(let gy=0; gy<pf.rows; gy++){
-      const y=pf.minY+(gy+0.5)*cs;
-      for(let gx=0; gx<pf.cols; gx++){
-        const x=pf.minX+(gx+0.5)*cs;
-        if(!site.isInsideVenue(x,y)) continue;
-        total++;
-        if(!pf.blocked[gy*pf.cols+gx]) open++;
-      }
-    }
-    if(!total) return null;
-    return { open:open*cell, total:total*cell, ratio:open/total };
+    return this.sim.usableArea || (this.sim.computeUsableArea && this.sim.computeUsableArea());
   }
 
   /** 실행된 상황 중 가장 위험했던 결과 */
@@ -7726,8 +7724,31 @@ class UIManager{
     B.update('none');
   }
   /* ---------- 통계 패널 ---------- */
+  /** 구역 내 면적당 인원 — SITE STATUS 실시간 표시 */
+  updateSiteDensity(){
+    const el=$('hudDens'); if(!el) return;
+    const c=this.sim.stats.cur;
+    const ua=c.usable || this.sim.usableArea;
+    if(!ua || !ua.open){
+      el.textContent='밀집도 —';
+      el.style.color='';
+      const e2=$('hudDens2'); if(e2) e2.textContent='';
+      return;
+    }
+    const d=c.siteDensity||0;
+    /* Fruin 기준 구간 — 히트맵 범례와 같은 색을 쓴다 */
+    const col = d>=6?'#ff1744': d>=4.5?'#ff5252': d>=3?'#ff9100': d>=1.5?'#ffea00':'#2ee38a';
+    const nm  = d>=6?'압사위험': d>=4.5?'위험': d>=3?'정체': d>=1.5?'혼잡':'원활';
+    el.innerHTML='밀집도 <b style="color:'+col+'">'+d.toFixed(2)+' 명/㎡</b> · '+nm;
+    const e2=$('hudDens2');
+    if(e2) e2.textContent='구역 내 '+fmtNum(c.inside||0)+'명 / 가용 '+
+      Math.round(ua.open).toLocaleString()+'㎡'+
+      (ua.ratio<0.98?(' (차단 '+Math.round((1-ua.ratio)*100)+'%)'):'');
+  }
+
   updateStats(){
     if((this._rpTick=(this._rpTick||0)+1)%12===0) this.updateReportInfo();
+    this.updateSiteDensity();
     const sim=this.sim, c=sim.stats.cur;
     $('stPop').textContent=fmtNum(c.active);
     $('stSpeed').innerHTML=c.avgSpeed.toFixed(2)+'<small>m/s</small>';
@@ -7867,6 +7888,28 @@ class Simulation{
     },1000);
   }
 
+  /** 실제로 사람이 설 수 있는 면적 (㎡).
+   *  행사장 다각형 안의 경로격자 셀 중 차단되지 않은 것만 센다.
+   *  건물·통행불가 지정이 그대로 반영되므로, 밀집도의 올바른 분모가 된다. */
+  computeUsableArea(){
+    const pf=this.path, site=this.site;
+    if(!pf || !pf.blocked){ this.usableArea=null; return null; }   // 아직 격자가 없다 — 재시도 허용
+    const cs=pf.cs, cell=cs*cs;
+    let open=0, total=0;
+    for(let gy=0; gy<pf.rows; gy++){
+      const y=pf.minY+(gy+0.5)*cs;
+      for(let gx=0; gx<pf.cols; gx++){
+        const x=pf.minX+(gx+0.5)*cs;
+        if(!site.isInsideVenue(x,y)) continue;
+        total++;
+        if(!pf.blocked[gy*pf.cols+gx]) open++;
+      }
+    }
+    this.usableArea = total ? {open:open*cell, total:total*cell, ratio:open/total} : null;
+    this._usableDone = true;      // null 이어도 다시 스캔하지 않는다
+    return this.usableArea;
+  }
+
   /** 벽/장애물/통제선을 격자에 반영하고 경로장을 다시 만든다 */
   rebuildWorld(){
     const t0=performance.now();
@@ -7906,6 +7949,7 @@ class Simulation{
       this.map.setFenceVisible($('chkFence') ? $('chkFence').checked : true);
       this.map.setFacilityVisible($('chkFacility') ? $('chkFacility').checked : true);
     }
+    this.computeUsableArea();
     this.police.updateRecommend();
     if(this.crowd.count>0 && (this.mode===MODE.EVAC||this.mode===MODE.DISPERSE)){
       this.crowd.assignExits();
